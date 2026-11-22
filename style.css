@@ -120,7 +120,6 @@ h1 em { font-style: italic; color: var(--red); }
 .g-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-top: 22px; padding-top: 16px;
   background: repeating-linear-gradient(90deg, #ffffff22 0 1px, transparent 1px 12px) top left / 100% 5px no-repeat; }
 .g-list { margin: 0; flex: 1 1 100%; font: 12px/1.6 var(--mono); color: #6f9f6fcc; }
-.g-foot .btn { margin-inline-start: auto; }
 
 @media (max-width: 900px) {
   .top { padding: 14px 16px 22px; gap: 18px; }
@@ -140,3 +139,38 @@ h1 em { font-style: italic; color: var(--red); }
   .g-msg { font-size: 17.5px; }
   .g-from { font-size: 21px; }
 }
+
+/* ── language: the switch, and Arabic set in Amiri / IBM Plex Sans Arabic like the Herbarium ── */
+.lang { all: unset; cursor: pointer; margin-inline-start: 18px; padding: 5px 9px; font: 500 12px/1 'IBM Plex Sans Arabic', var(--mono); color: var(--ink-2);
+  background: rgba(11, 12, 14, .6); border: 1px solid #ffffff1f; transition: color .2s, border-color .2s; }
+.lang[lang='en'] { font-family: var(--mono); letter-spacing: .06em; }
+.lang:hover { color: var(--ink); border-color: #ff8a8a88; }
+.lang:focus-visible { outline: 1px solid var(--red); outline-offset: 3px; }
+.is-gift .lang { margin-inline-start: auto; }
+html[lang='ar'] { --sans: 'IBM Plex Sans Arabic', system-ui, sans-serif; --serif: 'Amiri', 'IBM Plex Serif', serif; }
+html[lang='ar'] h1, html[lang='ar'] h1 em, html[lang='ar'] .g-to, html[lang='ar'] .g-from, html[lang='ar'] .card input, html[lang='ar'] .peek-to, html[lang='ar'] .peek-from { font-style: normal; }
+html[lang='ar'] h1 { font-weight: 700; line-height: 1.3; letter-spacing: 0; }
+html[lang='ar'] .tag, html[lang='ar'] .steps button, html[lang='ar'] .card span { letter-spacing: 0; font-family: 'IBM Plex Sans Arabic', var(--mono); font-size: 13px; }
+html[lang='ar'] .lead, html[lang='ar'] .sp b { font-size: 16.5px; }
+html[lang='ar'] .g-msg { font-size: 22px; line-height: 1.9; }
+
+/* ── the centre flower ── */
+.center-pick { margin-top: 22px; }
+.center-pick label { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.center-pick select { font: 500 12.5px var(--mono); color: var(--ink); background: #0e100f; border: 1px solid #ffffff22; padding: 8px 10px; outline: 0; }
+html[lang='ar'] .center-pick select { font-family: 'IBM Plex Sans Arabic', var(--mono); font-size: 14px; }
+.center-pick select:focus { border-color: var(--red); }
+
+/* ── the note as they'll read it, over the bouquet while writing ── */
+.peek { position: absolute; left: 0; right: 0; bottom: 0; padding: 40px 18px 14px; text-align: start; pointer-events: none;
+  background: linear-gradient(#0e100f00, #0e100fe6 40px, #0e100f); }
+.peek-to { margin: 0; font: italic 400 18px var(--serif); color: var(--ink-2); }
+.peek-to em { color: var(--red); }
+.peek-msg { margin: 6px 0 0; font: 400 15px/1.6 var(--serif); color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; max-height: 7.5em; overflow: hidden; }
+.peek-from { margin: 4px 0 0; text-align: end; font: italic 400 16px var(--serif); color: var(--ink); }
+.peek-from:empty { display: none; }
+
+/* ── the gift's actions ── */
+.g-acts { display: flex; flex-wrap: wrap; gap: 10px; margin-inline-start: auto; }
+.btn:disabled { opacity: .5; cursor: progress; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

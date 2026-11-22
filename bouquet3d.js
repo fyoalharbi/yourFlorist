@@ -58,6 +58,7 @@
   // ── The scene: a flat list of points ──
   //   x y z  nx ny nz  colour glyph  tx ty tz (line tangent)  ao  sway phase  group
   const STRIDE = 15, STEP = 0.0125;
+  const LITE = matchMedia('(pointer: coarse), (max-width: 700px)').matches;   // phones: thin the cloud, fewer frames
   class Cloud {
     constructor() { this.d = []; this.groups = []; }
     add(p, n, col, ch, o = {}) {
@@ -161,9 +162,9 @@
   }
 
   // ── The flowers ──
-  function rose(cl, F, rnd, o) {
+  function rose(cl, F, rnd, o, sp = {}) {
     [[3, 0.004, 0.04, 0.03, 1.5, 0.03], [4, 0.012, 0.06, 0.042, 1.35, 0.03], [5, 0.022, 0.08, 0.052, 1.15, 0.02], [5, 0.032, 0.1, 0.06, 0.95, 0.01], [6, 0.042, 0.115, 0.066, 0.72, 0]]
-      .forEach(([n, r0, len, w, up, inward], k) => ring(cl, F, rnd, n, { ...o, a0: k * 0.9, r0, len, w, up, inward, cup: 0.7, droop: k > 3 ? 0.025 : 0, tip: 'round', col: 'red', rim: 'red2', ao: 0.72 + 0.07 * k, jit: 0.3 }));
+      .forEach(([n, r0, len, w, up, inward], k) => ring(cl, F, rnd, n, { ...o, a0: k * 0.9, r0, len, w, up, inward, cup: 0.7, droop: k > 3 ? 0.025 : 0, tip: 'round', col: sp.col || 'red', rim: sp.rim || 'red2', ao: 0.72 + 0.07 * k, jit: 0.3 }));
     sepals(cl, F, rnd, 0.17, o);
   }
   function peony(cl, F, rnd, o) {
@@ -206,9 +207,9 @@
     dome(cl, F, 0.042, 0.028, 'ink', 'ink2', 'eye', o);
     stamens(cl, F, 18, 0.035, 0.055, 0.012, 'ink', 'ink2', o);
   }
-  function tulip(cl, F, rnd, o) {
-    ring(cl, F, rnd, 3, { ...o, r0: 0.015, len: 0.17, w: 0.075, up: 1.3, inward: 0.03, cup: 0.6, tip: 'round', col: 'crimson', rim: 'red', jit: 0.05, ao: 1.3 });
-    ring(cl, F, rnd, 3, { ...o, a0: Math.PI / 3, r0: 0.02, len: 0.18, w: 0.08, up: 1.24, inward: 0.025, cup: 0.6, tip: 'round', col: 'crimson', rim: 'red', jit: 0.05, ao: 1.3 });
+  function tulip(cl, F, rnd, o, sp = {}) {
+    ring(cl, F, rnd, 3, { ...o, r0: 0.015, len: 0.17, w: 0.075, up: 1.3, inward: 0.03, cup: 0.6, tip: 'round', col: sp.col || 'crimson', rim: sp.rim || 'red', jit: 0.05, ao: 1.3 });
+    ring(cl, F, rnd, 3, { ...o, a0: Math.PI / 3, r0: 0.02, len: 0.18, w: 0.08, up: 1.24, inward: 0.025, cup: 0.6, tip: 'round', col: sp.col || 'crimson', rim: sp.rim || 'red', jit: 0.05, ao: 1.3 });
   }
   function babysBreath(cl, F, rnd, o) {
     for (let k = 0; k < 11; k++) {
@@ -237,25 +238,27 @@
 
   // Order matters: a flower's index is how it travels in the URL. New kinds go at the end.
   const SPECIES = [
-    { name: 'Garden rose', sub: 'love, plainly said', size: 0.17, build: rose },
-    { name: 'Peony', sub: 'a happy life', size: 0.2, build: peony },
-    { name: 'Daisy', sub: 'innocence, new starts', size: 0.18, build: daisy },
-    { name: 'Sunflower', sub: 'loyalty, warmth', size: 0.26, build: sunflower },
-    { name: 'Poppy', sub: 'remembrance', size: 0.17, build: poppy },
-    { name: 'Violet', sub: 'faithfulness', size: 0.09, build: violet },
-    { name: 'Camellia', sub: 'longing', size: 0.15, build: camellia },
-    { name: 'Cosmos', sub: 'order and harmony', size: 0.18, build: cosmos },
-    { name: 'Anemone', sub: 'anticipation', size: 0.16, build: anemone },
-    { name: "Baby's breath", sub: 'everlasting', size: 0.06, filler: true, build: babysBreath },
-    { name: 'Tulip', sub: 'perfect love', size: 0.12, lift: 0.04, build: tulip },
-    { name: 'Lavender', sub: 'devotion', size: 0.05, filler: true, lift: 0.06, build: lavender },
+    { name: 'Garden rose', ar: 'وردة جوري', sub: 'love, plainly said', subAr: 'حبٌّ بلا تكلّف', size: 0.17, build: rose },
+    { name: 'Peony', ar: 'فاوانيا', sub: 'a happy life', subAr: 'حياة سعيدة', size: 0.2, build: peony },
+    { name: 'Daisy', ar: 'أقحوان', sub: 'innocence, new starts', subAr: 'براءة وبدايات جديدة', size: 0.18, build: daisy },
+    { name: 'Sunflower', ar: 'دوّار الشمس', sub: 'loyalty, warmth', subAr: 'وفاء ودفء', size: 0.26, build: sunflower },
+    { name: 'Poppy', ar: 'خشخاش', sub: 'remembrance', subAr: 'ذكرى', size: 0.17, build: poppy },
+    { name: 'Violet', ar: 'بنفسج', sub: 'faithfulness', subAr: 'إخلاص', size: 0.09, build: violet },
+    { name: 'Camellia', ar: 'كاميليا', sub: 'longing', subAr: 'شوق', size: 0.15, build: camellia },
+    { name: 'Cosmos', ar: 'كوزموس', sub: 'order and harmony', subAr: 'انسجام', size: 0.18, build: cosmos },
+    { name: 'Anemone', ar: 'شقائق النعمان', sub: 'anticipation', subAr: 'ترقّب', size: 0.16, build: anemone },
+    { name: "Baby's breath", ar: 'جبسوفيلا', sub: 'everlasting', subAr: 'دائم', size: 0.06, filler: true, build: babysBreath },
+    { name: 'Tulip', ar: 'توليب', sub: 'perfect love', subAr: 'حبٌّ كامل', size: 0.12, lift: 0.04, build: tulip },
+    { name: 'Lavender', ar: 'خزامى', sub: 'devotion', subAr: 'تفانٍ', size: 0.05, filler: true, lift: 0.06, build: lavender },
+    { name: 'White rose', ar: 'وردة بيضاء', sub: 'a new beginning', subAr: 'بداية جديدة', size: 0.17, build: rose, col: 'white', rim: 'cream' },
+    { name: 'Yellow tulip', ar: 'توليب أصفر', sub: 'sunshine, cheer', subAr: 'بهجة وإشراق', size: 0.12, lift: 0.04, build: tulip, col: 'gold', rim: 'gold2' },
   ];
   const WRAPS = [
-    { name: 'Kraft', paper: 'kraft', edge: 'kraft2', tissue: 'blush', ribbon: 'red', tex: 1, dot: '#c49a64' },
-    { name: 'Night', paper: 'night', edge: 'ink2', tissue: 'gold', ribbon: 'gold', tex: 2, dot: '#8a8a9a' },
-    { name: 'Linen', paper: 'linen', edge: 'white', tissue: 'sage', ribbon: 'red', tex: 3, dot: '#e8e4d0' },
-    { name: 'Blush', paper: 'rose', edge: 'blush', tissue: 'white', ribbon: 'white', tex: 4, dot: '#ffc0d0' },
-    { name: 'Moss', paper: 'leafD', edge: 'stem', tissue: 'cream', ribbon: 'blush', tex: 5, dot: '#5f8f5f' },
+    { name: 'Kraft', ar: 'كرافت', paper: 'kraft', edge: 'kraft2', tissue: 'blush', ribbon: 'red', tex: 1, dot: '#c49a64' },
+    { name: 'Night', ar: 'ليلي', paper: 'night', edge: 'ink2', tissue: 'gold', ribbon: 'gold', tex: 2, dot: '#8a8a9a' },
+    { name: 'Linen', ar: 'كتّان', paper: 'linen', edge: 'white', tissue: 'sage', ribbon: 'red', tex: 3, dot: '#e8e4d0' },
+    { name: 'Blush', ar: 'وردي', paper: 'rose', edge: 'blush', tissue: 'white', ribbon: 'white', tex: 4, dot: '#ffc0d0' },
+    { name: 'Moss', ar: 'طحلبي', paper: 'leafD', edge: 'stem', tissue: 'cream', ribbon: 'blush', tex: 5, dot: '#5f8f5f' },
   ];
 
   // ── Leaves: a pointed blade with a midrib ──
@@ -336,12 +339,14 @@
   }
 
   // ── A whole bouquet: heads on a dome, stems gathered at the ribbon, leaves round the rim ──
-  function build(ids, wrapIdx, seed) {
+  function build(ids, wrapIdx, seed, center = -1) {
     const rnd = seeded('3d' + seed), cl = new Cloud(), Wp = WRAPS[wrapIdx] || WRAPS[0];
     const n = ids.length;
     if (!n) { wrapping(cl, Wp, seeded('wrap' + seed)); return { cl, target: [0, 0.15, 0] }; }
     const items = ids.map((id) => ({ sp: SPECIES[id], k: rnd() })).sort((a, b) => (b.sp.size - a.sp.size) || (a.k - b.k));
     const main = items.filter((it) => !it.sp.filler), fill = items.filter((it) => it.sp.filler);
+    const ci = main.findIndex((it) => it.sp === SPECIES[center]);
+    if (ci > 0) main.unshift(main.splice(ci, 1)[0]);
     const Fp = [0, 0, 0], UP = [0, 1, 0], rot = rnd() * TAU, CAPMAX = 0.8;   // stems fan out from the tie, no wider than a hand holds them
     let hk = 1.7 + (12 - Math.max(1, main.length)) * 0.055;   // fewer flowers: bigger heads, so the paper doesn't dominate
     const Rd = 0.98 + (hk - 1.7) * 0.3;                        // the dome the heads sit on: the stems' length from the tie
@@ -420,14 +425,14 @@
         const side = norm(cross(tg, out)), d = norm(add(mul(out, 0.8), mul(tg, 0.6)));
         leaf(cl, p, d, side, 0.12, 0.03, 'leaf', { droop: 0.05, sw: t, ph: o.ph, g: GREEN, ao: 0.8 });
       }
-      it.sp.build(cl, F, rnd, o);
+      it.sp.build(cl, F, rnd, o, it.sp);
     });
     return { cl, target: [0, 0.45, 0] };
   }
   // One flower on its own, turned three-quarters toward the camera (the counter's thumbnails)
   function single(id) {
     const cl = new Cloud(), sp = SPECIES[id], k = 0.3 / sp.size, F = frame([0, 0, 0], [0, 0.75, 0.66], k);
-    sp.build(cl, F, seeded('one' + id), {});
+    sp.build(cl, F, seeded('one' + id), {}, sp);
     return { cl, target: sp.build === lavender ? [0, 0.1 * k, 0.09 * k] : [0, 0, 0] };
   }
 
@@ -448,16 +453,23 @@
       const loop = (now) => {
         if (this.dead) return;
         requestAnimationFrame(loop);
-        if (!this.visible || document.hidden || now - this.last < 33) return;
+        if (!this.visible || document.hidden || now - this.last < (LITE ? 42 : 33)) return;
         const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
         if (REDUCED && !this.dirty) return;
         this.step(dt); this.draw(this.t); this.dirty = false;
       };
-      setTimeout(() => { this.started = true; requestAnimationFrame(loop); }, this.o.delay || 0);   // a still frame first, so the page's own intro plays smoothly
+      setTimeout(() => { this.started = true; if (this.o.reveal && !REDUCED) this.grow = 0; requestAnimationFrame(loop); }, this.o.delay || 0);   // a still frame first, so the page's own intro plays smoothly
     }
     destroy() { this.dead = true; }
     setScene(sc, animate) {
-      this.pts = Float32Array.from(sc.cl.d); this.n = sc.cl.d.length / STRIDE;
+      let d = sc.cl.d;
+      const cap = 46000;
+      if (LITE && !this.o.thumb && d.length / STRIDE > cap) {          // keep an even, deterministic share; the pinhole pass covers the gaps
+        const keep = cap / (d.length / STRIDE), out = [];
+        for (let k = 0, o = 0; o < d.length; k++, o += STRIDE) if (((k * 2654435761) >>> 0) / 4294967296 < keep) for (let j = 0; j < STRIDE; j++) out.push(d[o + j]);
+        d = out;
+      }
+      this.pts = Float32Array.from(d); this.n = d.length / STRIDE;
       this.groups = Float32Array.from(sc.cl.groups.flat()); this.target = sc.target; this.hasFlowers = sc.cl.groups.length > 0;
       // the bouquet's real extent: how far it reaches out from the axis, and from top to bottom
       let fit = 0, rx = 0, y0 = Infinity, y1 = -Infinity;
@@ -477,7 +489,7 @@
       this.W = r.width; this.H = r.height;
       this.c.width = Math.round(r.width * d); this.c.height = Math.round(r.height * d);
       this.ctx.setTransform(d, 0, 0, d, 0, 0);
-      this.fs = this.o.thumb ? clamp(r.width / 30 / 0.6, 3.2, this.o.maxFs || 6) : clamp(r.width / 112 / 0.6, 6, 10.5);
+      this.fs = this.o.thumb ? clamp(r.width / 30 / 0.6, 3.2, this.o.maxFs || 6) : clamp(Math.min(r.width, r.height * 1.05) / 112 / 0.6, 6, 10.5);
       this.cw = this.fs * 0.6; this.chH = this.fs * 1.12;
       this.COLS = Math.floor(r.width / this.cw); this.ROWS = Math.floor(r.height / this.chH);
       const N = this.COLS * this.ROWS;
@@ -513,6 +525,7 @@
     }
     draw(t) {
       if (!this.pts || !this.COLS) return;
+      if (this.o.reveal && !this.started && !REDUCED) { this.ctx.clearRect(0, 0, this.W, this.H); return; }
       const { COLS, ROWS, zb, gl, co, cw, chH } = this, ctx = this.ctx;
       zb.fill(0);
       const tg = this.target, fit = this.fit, dist = fit * 3.4, cp = Math.cos(this.pitch);
