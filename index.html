@@ -30,7 +30,7 @@
       <div class="step" data-pane="1">
         <p class="tag">step 01 · the counter</p>
         <h1>Pick your <em>flowers</em></h1>
-        <p class="lead">Tap a flower to add a stem. Up to twelve fit in one bouquet.</p>
+        <p class="lead">Tap a flower to add a stem. Up to twelve fit in one bouquet. Drag the bouquet to turn it.</p>
         <ul class="species" id="species"></ul>
         <div class="wraps">
           <p class="tag">wrapping</p>
@@ -78,9 +78,9 @@
     <aside class="stage">
       <figure class="plate" id="plate">
         <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
-        <pre class="art" id="art" aria-label="Your bouquet"></pre>
+        <canvas class="art" id="art" role="img" aria-label="Your bouquet in 3D. Drag to turn it."></canvas>
       </figure>
-      <figcaption class="fig"><span id="tally">an empty wrap</span><span id="wrapname"></span></figcaption>
+      <figcaption class="fig"><span id="tally">an empty wrap</span><span class="hint">drag to turn</span><span id="wrapname"></span></figcaption>
     </aside>
   </main>
 
@@ -88,7 +88,7 @@
   <main class="gift" id="gift" hidden>
     <p class="tag" id="g-k">a delivery</p>
     <h1 class="g-to" id="g-to"></h1>
-    <figure class="g-plate"><pre class="art" id="g-art" aria-label="A bouquet"></pre></figure>
+    <figure class="g-plate"><canvas class="art" id="g-art" role="img" aria-label="A bouquet in 3D. Drag to turn it."></canvas><figcaption class="hint">drag to turn</figcaption></figure>
     <article class="g-card" id="g-card">
       <p class="g-msg" id="g-msg" dir="auto"></p>
       <p class="g-from" id="g-from" dir="auto"></p>
@@ -97,6 +97,7 @@
     <a class="btn" href="./" data-home>Send flowers of your own →</a>
   </main>
 
+  <script src="bouquet3d.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
