@@ -106,14 +106,27 @@ h1 em { font-style: italic; color: var(--red); }
 .hint { font: 11px var(--mono); letter-spacing: .08em; color: #5a5a66; }
 
 /* ── the delivery ── */
-/* the bouquet fills the screen above the veil; app.js keeps --veil at the veil's height */
+/* the bouquet fills the screen; the note waits behind "Read the note", then a veil slides up over the flowers */
 .gift { position: relative; height: 100svh; overflow: hidden; }
-.g-art { position: fixed; z-index: 0; left: 0; right: 0; top: 124px; bottom: calc(var(--veil, 30svh) * .55); animation: up 1.2s cubic-bezier(.2, .8, .2, 1) .2s both; }
+.g-art { position: fixed; z-index: 0; left: 0; right: 0; top: 124px; bottom: 76px; animation: up 1.2s cubic-bezier(.2, .8, .2, 1) .2s both; }
+.g-bar { position: fixed; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: 30px 20px max(22px, env(safe-area-inset-bottom)); background: linear-gradient(#0b0c0e00, #0b0c0ecc 40%); transition: opacity .4s, transform .5s cubic-bezier(.2, .8, .2, 1);
+  animation: up 1s cubic-bezier(.2, .8, .2, 1) 1.2s both; }
+.g-read { font-size: 14px; padding: 13px 18px; animation: glow 2.8s ease-in-out 2.4s infinite; }
+@keyframes glow { 0%, 100% { box-shadow: 0 0 0 #ff8a8a00; } 50% { box-shadow: 0 0 18px #ff8a8a44; } }
+.gift.is-open .g-bar { opacity: 0; transform: translateY(20px); pointer-events: none; }
+.g-hide { all: unset; cursor: pointer; display: block; width: fit-content; margin: 0 auto 18px; font: 500 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+html[lang='ar'] .g-hide { letter-spacing: 0; font-family: 'IBM Plex Sans Arabic', var(--mono); font-size: 13px; }
+.g-hide:hover { color: var(--ink); } .g-hide:focus-visible { outline: 1px solid var(--red); outline-offset: 4px; }
 .g-head { position: fixed; z-index: 2; top: 62px; left: 16px; right: 16px; text-align: center; pointer-events: none; animation: up .9s cubic-bezier(.2, .8, .2, 1) both; }
 .g-to { margin: 6px 0 0; font: italic 400 clamp(22px, 2.6vw, 30px)/1.2 var(--serif); letter-spacing: -.01em; color: var(--ink-2); text-wrap: balance; }
-.g-veil { position: fixed; z-index: 2; left: 0; right: 0; bottom: 0; max-height: 58svh; overflow-y: auto; padding: 70px 20px max(28px, env(safe-area-inset-bottom));
-  background: linear-gradient(#0b0c0e00, #0b0c0ed9 70px, #0b0c0ef2 50%, #0b0c0e); animation: up 1s cubic-bezier(.2, .8, .2, 1) .6s both; }
+/* translucent: the flowers stay visible through it */
+.g-veil { position: fixed; z-index: 3; left: 0; right: 0; bottom: 0; max-height: 66svh; overflow-y: auto; padding: 90px 20px max(28px, env(safe-area-inset-bottom));
+  background: linear-gradient(#0b0c0e00, #0b0c0eb8 90px, #0b0c0ecc 55%, #0b0c0ef0);
+  transform: translateY(105%); visibility: hidden; transition: transform .8s cubic-bezier(.2, .8, .2, 1), visibility 0s .8s; }
+.gift.is-open .g-veil { transform: none; visibility: visible; transition: transform .8s cubic-bezier(.2, .8, .2, 1), visibility 0s; }
 .g-card, .g-foot { width: min(640px, 100%); margin: 0 auto; }
+.g-card:focus { outline: none; }
 .g-msg { margin: 0; font: 400 20px/1.7 var(--serif); color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.7em; }
 .g-from { margin: 12px 0 0; text-align: end; font: italic 400 24px/1.3 var(--serif); color: var(--ink); }
 .g-from:empty { display: none; }
@@ -131,7 +144,7 @@ h1 em { font-style: italic; color: var(--red); }
   .fig .hint { display: none; }
   .g-head { top: 52px; }
   .g-art { top: 112px; }
-  .g-veil { padding-top: 50px; }
+  .g-veil { padding-top: 60px; max-height: 72svh; }
   .fig { margin: 8px 0 6px; }
   .species { grid-template-columns: 1fr; }
   .lead { font-size: 15px; }

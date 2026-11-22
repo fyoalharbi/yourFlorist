@@ -22,7 +22,7 @@
       back1: '← Flowers', next2: 'Tie the ribbon →',
       s3tag: 'step 03 · delivery', s3h: 'Your bouquet is <em>ready</em>', s3lead: 'Send this link. The flowers and your note are packed into it.',
       linkAria: 'Bouquet link', copy: 'Copy link', copied: 'copied. now send it to them.', preview: 'Preview what they\'ll see ↗', back2: '← Edit note', again: 'Start a new bouquet',
-      drag: 'drag to turn', dragGift: 'drag the bouquet to turn it', save: 'Save as image', saving: 'Saving…', own: 'Send flowers of your own →',
+      drag: 'drag to turn', dragGift: 'drag the bouquet to turn it', read: 'Read the note ↑', readFrom: (f) => `Read ${f}'s note ↑`, hide: 'Hide the note ↓', save: 'Save as image', saving: 'Saving…', own: 'Send flowers of your own →',
       add: (n) => `Add a ${n}`, rm: (n) => `Remove a ${n}`,
       tally: (n) => (n ? `${n} stem${n > 1 ? 's' : ''}${n >= MAX ? ' · full' : ''}` : 'an empty wrap'),
       paper: (w) => `${w.toLowerCase()} paper`,
@@ -40,7 +40,7 @@
       back1: '→ الورد', next2: 'اربط الشريطة ←',
       s3tag: 'الخطوة ٣ · التوصيل', s3h: 'باقتك <em>جاهزة</em>', s3lead: 'أرسل هذا الرابط؛ ففيه الورد وبطاقتك.',
       linkAria: 'رابط الباقة', copy: 'انسخ الرابط', copied: 'نُسخ الرابط. أرسله الآن.', preview: 'شاهد ما سيرونه ↗', back2: '→ عدّل البطاقة', again: 'باقة جديدة',
-      drag: 'اسحب للتدوير', dragGift: 'اسحب الباقة لتدويرها', save: 'احفظها صورة', saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
+      drag: 'اسحب للتدوير', dragGift: 'اسحب الباقة لتدويرها', read: 'اقرأ البطاقة ↑', readFrom: (f) => `اقرأ بطاقة ${f} ↑`, hide: 'أخفِ البطاقة ↓', save: 'احفظها صورة', saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
       add: (n) => `أضف ${n}`, rm: (n) => `احذف ${n}`,
       tally: (n) => (n ? `الأغصان: ${n}${n >= MAX ? ' · ممتلئة' : ''}` : 'غلاف فارغ'),
       paper: (w) => `ورق ${w}`,
@@ -156,18 +156,28 @@
     $('#g-from').textContent = b.from ? '— ' + b.from : '';
     $('#g-list').textContent = listOf(b.ids, b.wrap);
     $('#g-art').setAttribute('aria-label', t('bouquetAria', listOf(b.ids, b.wrap)));
+    $('#g-read').textContent = b.from ? t('readFrom', b.from) : t('read');
     if (relabel) return;                      // a language switch: the words change, the bouquet and note stay put
-    // the bouquet takes the screen above the veil; keep it in step with the veil's height
-    const veil = $('#g-veil'), fit = () => $('#gift').style.setProperty('--veil', veil.offsetHeight + 'px');
-    if (!gift3d) new ResizeObserver(fit).observe(veil);
     const msg = $('#g-msg');
     $('#g-msg-sr').textContent = b.msg;
-    // hold the note's space with its own noise first, so the veil (and the bouquet above it) doesn't jump when it decodes
-    if (b.msg) { msg.textContent = b.msg.replace(/\S/g, '0'); setTimeout(() => decode(msg, b.msg), 900); } else $('#g-card').hidden = !b.from;
-    fit();
+    msg.textContent = b.msg.replace(/\S/g, '0');   // noise until the veil opens
+    $('#g-card').hidden = !b.msg && !b.from;
+    msg.dataset.read = '';
+    setNote(false);
     // reveal: the bouquet grows in once the page's own intro has played
     gift3d = gift3d || new B3D.Renderer($('#g-art'), { yaw: 0.4, delay: 700, reveal: true });
     gift3d.setScene(B3D.build(b.ids, b.wrap, b.seed, b.center), true);
+  }
+
+  // ── The note: hidden behind "Read the note"; opening slides the veil up over the bouquet and decodes it ──
+  function setNote(open) {
+    const gift = $('#gift'), veil = $('#g-veil'), msg = $('#g-msg');
+    gift.classList.toggle('is-open', open);
+    veil.inert = !open;
+    $('#g-read').setAttribute('aria-expanded', open);
+    if (!open) return;
+    if (current && current.msg && !msg.dataset.read) { msg.dataset.read = '1'; setTimeout(() => decode(msg, current.msg), REDUCED ? 0 : 450); }
+    setTimeout(() => $('#g-card').focus({ preventScroll: true }), REDUCED ? 0 : 500);
   }
 
   // ── Save as image: the bouquet as it is right now, with the name and the note, in a portrait card ──
@@ -326,6 +336,9 @@
       save(); renderPlate(true); go(1);
     };
     $('#save').onclick = saveImage;
+    $('#g-read').onclick = () => setNote(true);
+    $('#g-hide').onclick = () => { setNote(false); $('#g-read').focus({ preventScroll: true }); };
+    addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#gift').classList.contains('is-open')) $('#g-hide').click(); });
     $('#lang').onclick = () => applyLang(lang === 'ar' ? 'en' : 'ar');
   }
   function flash(sel) { const el = $(sel); el.style.color = 'var(--red)'; setTimeout(() => (el.style.color = ''), 700); }

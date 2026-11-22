@@ -105,15 +105,20 @@
   </main>
 
   <!-- ── the delivery: what the recipient opens ── -->
-  <!--    the bouquet fills the screen, the name sits small at the top, the note on a veil across the bottom -->
+  <!--    the bouquet fills the screen with the name small at the top; "Read the note" slides a veil up over it -->
   <main class="gift" id="gift" hidden>
     <div class="g-art"><canvas class="art" id="g-art" role="img" aria-label="A bouquet in 3D. Drag to turn it."></canvas></div>
     <header class="g-head">
       <p class="tag" id="g-k">a delivery</p>
       <h1 class="g-to" id="g-to"></h1>
     </header>
-    <section class="g-veil" id="g-veil">
-      <article class="g-card" id="g-card">
+    <div class="g-bar" id="g-bar">
+      <button class="btn is-go g-read" id="g-read" type="button" aria-controls="g-veil" aria-expanded="false">Read the note ↑</button>
+      <span class="hint" data-i18n="dragGift">drag the bouquet to turn it</span>
+    </div>
+    <section class="g-veil" id="g-veil" inert>
+      <button class="g-hide" id="g-hide" type="button" data-i18n="hide">Hide the note ↓</button>
+      <article class="g-card" id="g-card" tabindex="-1">
         <!-- the animated note is for the eyes; screen readers get the words straight away -->
         <p class="g-msg" id="g-msg" dir="auto" aria-hidden="true"></p>
         <p class="sr-only" id="g-msg-sr" dir="auto"></p>
@@ -121,7 +126,6 @@
       </article>
       <footer class="g-foot">
         <p class="g-list" id="g-list"></p>
-        <span class="hint" data-i18n="dragGift">drag the bouquet to turn it</span>
         <span class="g-acts">
           <button class="btn" id="save" type="button" data-i18n="save">Save as image</button>
           <a class="btn is-go" href="./" data-home data-i18n="own">Send flowers of your own →</a>
