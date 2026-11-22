@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>yourFlorist</title>
+  <meta name="description" content="Pick flowers, write a note, and send someone a bouquet as a link." />
+  <meta property="og:title" content="Someone sent you flowers" />
+  <meta property="og:description" content="A hand-picked ASCII bouquet, with a note." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230b0c0e'/%3E%3Ctext x='16' y='23' font-family='monospace' font-size='20' text-anchor='middle' fill='%23ff8a8a'%3E%40%3C/text%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Serif:ital,wght@0,400;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./" data-home>your<em>Florist</em></a>
+    <nav class="steps" id="steps" aria-label="Steps">
+      <button data-step="1" class="is-on"><b>01</b><span>Flowers</span></button>
+      <button data-step="2"><b>02</b><span>Note</span></button>
+      <button data-step="3"><b>03</b><span>Send</span></button>
+    </nav>
+  </header>
+
+  <!-- ── the florist: compose a bouquet ── -->
+  <main class="shop" id="shop">
+    <section class="pane" id="pane">
+
+      <div class="step" data-pane="1">
+        <p class="tag">step 01 · the counter</p>
+        <h1>Pick your <em>flowers</em></h1>
+        <p class="lead">Tap a flower to add a stem. Up to twelve fit in one bouquet.</p>
+        <ul class="species" id="species"></ul>
+        <div class="wraps">
+          <p class="tag">wrapping</p>
+          <div class="wrap-row" id="wraps"></div>
+        </div>
+        <div class="acts">
+          <button class="btn" id="shuffle" type="button">Rearrange</button>
+          <button class="btn" id="clear" type="button">Clear</button>
+          <button class="btn is-go" data-goto="2" type="button" id="to2">Write a note →</button>
+        </div>
+      </div>
+
+      <div class="step" data-pane="2" hidden>
+        <p class="tag">step 02 · the card</p>
+        <h1>Write a <em>note</em></h1>
+        <p class="lead">It travels inside the link, so only people you send it to will see it.</p>
+        <form class="card" id="card" autocomplete="off">
+          <label><span>To</span><input id="to" maxlength="40" placeholder="their name" dir="auto" /></label>
+          <label class="msg"><span>Message</span><textarea id="msg" maxlength="600" rows="6" placeholder="something only you would say…" dir="auto"></textarea><small id="count">0 / 600</small></label>
+          <label><span>From</span><input id="from" maxlength="40" placeholder="your name" dir="auto" /></label>
+        </form>
+        <div class="acts">
+          <button class="btn" data-goto="1" type="button">← Flowers</button>
+          <button class="btn is-go" data-goto="3" type="button">Tie the ribbon →</button>
+        </div>
+      </div>
+
+      <div class="step" data-pane="3" hidden>
+        <p class="tag">step 03 · delivery</p>
+        <h1>Your bouquet is <em>ready</em></h1>
+        <p class="lead">Send this link. The flowers and your note are packed into it.</p>
+        <div class="link">
+          <input id="link" readonly aria-label="Bouquet link" />
+          <button class="btn is-go" id="copy" type="button">Copy link</button>
+        </div>
+        <p class="note" id="copied" aria-live="polite"></p>
+        <div class="acts">
+          <a class="btn" id="open" target="_blank" rel="noopener">Preview what they'll see ↗</a>
+          <button class="btn" data-goto="2" type="button">← Edit note</button>
+          <button class="btn" id="again" type="button">Start a new bouquet</button>
+        </div>
+      </div>
+    </section>
+
+    <aside class="stage">
+      <figure class="plate" id="plate">
+        <i class="c tl"></i><i class="c tr"></i><i class="c bl"></i><i class="c br"></i>
+        <pre class="art" id="art" aria-label="Your bouquet"></pre>
+      </figure>
+      <figcaption class="fig"><span id="tally">an empty wrap</span><span id="wrapname"></span></figcaption>
+    </aside>
+  </main>
+
+  <!-- ── the delivery: what the recipient opens ── -->
+  <main class="gift" id="gift" hidden>
+    <p class="tag" id="g-k">a delivery</p>
+    <h1 class="g-to" id="g-to"></h1>
+    <figure class="g-plate"><pre class="art" id="g-art" aria-label="A bouquet"></pre></figure>
+    <article class="g-card" id="g-card">
+      <p class="g-msg" id="g-msg" dir="auto"></p>
+      <p class="g-from" id="g-from" dir="auto"></p>
+    </article>
+    <p class="g-list" id="g-list"></p>
+    <a class="btn" href="./" data-home>Send flowers of your own →</a>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
