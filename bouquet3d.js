@@ -283,7 +283,7 @@
       const top = o.h * (1 - 0.38 * Math.pow(Math.abs(s), 1.25));                  // a peak at the corner, lower at the sides
       const y = t * top, q = y / o.h;
       const ph = o.c + s * o.span * (0.3 + 0.7 * Math.sqrt(Math.max(0, q)));        // gathered at the waist, opening upward
-      const r = (R0 + o.lay + (o.R - R0) * Math.pow(Math.max(0, q), 0.75) + 0.07 * q * q * q)   // the corner curls outward
+      const r = (R0 + o.lay + (o.R - R0) * Math.max(0, q) + 0.06 * q * q * q)                    // a straight cone; the corner curls outward
         * (1 + 0.025 * Math.sin(9 * s + 5 * t + o.seed));                            // a little crumple
       return [r * Math.cos(ph), y, r * Math.sin(ph)];
     };
@@ -298,12 +298,16 @@
       } else cl.add(p, n, o.col, RAMP - o.tex, { ao, g });
     }, [0, 1, 0]);
   }
-  function wrapping(cl, Wp, rnd) {
+  // fit: { h, tan } — how tall the paper stands and how fast it flares, measured from the flowers it holds
+  function wrapping(cl, Wp, rnd, fit = { h: 0.9, tan: 0.8 }) {
+    const R = (h) => R0 + h * fit.tan;                  // the cone's radius at a given height
     // the tissue: one wide, taller sheet behind, peeking above and between the paper
-    sheet(cl, { c: FRONT + Math.PI, span: 2.05, h: 1.02 + rnd() * 0.05, R: 0.74, lay: -0.012, col: Wp.tissue, edge: Wp.tissue, tex: 6, ao: 0.8, seed: rnd() * 9, g: -9 });
+    const ht = fit.h * 1.12;
+    sheet(cl, { c: FRONT + Math.PI, span: 2.05, h: ht + rnd() * 0.04, R: R(ht) * 0.93, lay: -0.012, col: Wp.tissue, edge: Wp.tissue, tex: 6, ao: 0.8, seed: rnd() * 9, g: -9 });
     // the paper: three sheets round the back and sides, each corner at its own height
-    [[-1.45, 0.82], [0, 0.94], [1.45, 0.82]].forEach(([dc, h], k) => {
-      sheet(cl, { c: FRONT + Math.PI + dc + (rnd() - 0.5) * 0.12, span: 0.98, h: h + (rnd() - 0.5) * 0.06, R: 0.84 + k * 0.015, lay: k === 1 ? 0.004 : 0.01,
+    [[-1.45, 0.88], [0, 1], [1.45, 0.88]].forEach(([dc, f], k) => {
+      const h = fit.h * f * (1 + (rnd() - 0.5) * 0.06);
+      sheet(cl, { c: FRONT + Math.PI + dc + (rnd() - 0.5) * 0.12, span: 0.98, h, R: R(h) + 0.012 * k, lay: k === 1 ? 0.004 : 0.01,
         col: Wp.paper, edge: Wp.edge, tex: Wp.tex, seed: rnd() * 9, g: -10 - k });
     });
     // the skirt: paper gathered under the ribbon, flaring a little
@@ -334,14 +338,13 @@
   // ── A whole bouquet: heads on a dome, stems gathered at the ribbon, leaves round the rim ──
   function build(ids, wrapIdx, seed) {
     const rnd = seeded('3d' + seed), cl = new Cloud(), Wp = WRAPS[wrapIdx] || WRAPS[0];
-    wrapping(cl, Wp, seeded('wrap' + seed));
     const n = ids.length;
-    if (!n) return { cl, target: [0, 0.15, 0] };
+    if (!n) { wrapping(cl, Wp, seeded('wrap' + seed)); return { cl, target: [0, 0.15, 0] }; }
     const items = ids.map((id) => ({ sp: SPECIES[id], k: rnd() })).sort((a, b) => (b.sp.size - a.sp.size) || (a.k - b.k));
     const main = items.filter((it) => !it.sp.filler), fill = items.filter((it) => it.sp.filler);
-    const Fp = [0, -0.12, 0], UP = [0, 1, 0], rot = rnd() * TAU, CAPMAX = 1.05;
+    const Fp = [0, 0, 0], UP = [0, 1, 0], rot = rnd() * TAU, CAPMAX = 0.8;   // stems fan out from the tie, no wider than a hand holds them
     let hk = 1.7 + (12 - Math.max(1, main.length)) * 0.055;   // fewer flowers: bigger heads, so the paper doesn't dominate
-    const Rd = 0.82 + (hk - 1.7) * 0.3;                        // the dome the heads sit on, around Fp
+    const Rd = 0.98 + (hk - 1.7) * 0.3;                        // the dome the heads sit on: the stems' length from the tie
     // too many big heads for the dome? shrink them all a little (12 sunflowers still fit)
     const need = main.reduce((a, it) => a + Math.PI * ((it.sp.size * hk) / Rd) ** 2, 0), room = 0.82 * TAU * (1 - Math.cos(CAPMAX));
     if (need > room) hk *= Math.sqrt(room / need);
@@ -349,7 +352,7 @@
     const angle = (a, b) => Math.acos(clamp(a[0] * b[0] + a[1] * b[1] + a[2] * b[2], -1, 1));
     const onDome = (th, ph) => [Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)];
     // start: a golden-angle spiral from the top, big heads first
-    const cap0 = main.length <= 1 ? 0 : Math.min(0.85, 0.2 + 0.058 * main.length);
+    const cap0 = main.length <= 1 ? 0 : Math.min(0.7, 0.18 + 0.05 * main.length);
     const P = main.map((it, i) => ({ it, v: main.length === 1 ? [0, 1, 0] : onDome(Math.acos(1 - (1 - Math.cos(cap0)) * ((i + 0.5) / main.length)), rot + i * 2.39996 + rnd() * 0.4) }));
     // settle: heads that overlap push apart along the dome; a gentle pull keeps the dome compact
     for (let iter = 0; iter < 60; iter++) {
@@ -384,20 +387,30 @@
       placed.push({ v: best, a: ang(it) * 1.4 });
       P.push({ it, v: best, filler: true });
     }
+    for (const [i, q] of P.entries()) q.c = add(Fp, mul(q.v, Rd + (q.filler ? -0.06 : (i % 2 ? -0.04 : 0.02)) + (rnd() - 0.5) * 0.03 + (q.it.sp.lift || 0)));
+    // the paper: tall enough that only the crown of the bouquet rises above it, flared just enough
+    // that every head's back half sits inside it, as florists wrap around what they've gathered
+    let top = 0, tan = 0.35;
+    for (const q of P) {
+      const hr = q.it.sp.size * hk, y = Math.max(0.2, q.c[1]), rho = Math.hypot(q.c[0], q.c[2]);
+      top = Math.max(top, q.c[1]);
+      tan = Math.max(tan, (rho + 0.6 * hr - R0) / y);
+    }
+    const fit = { h: clamp(top * 0.8, 0.45, 1.5), tan: Math.min(tan, 1.3) };
+    wrapping(cl, Wp, seeded('wrap' + seed), fit);
     const m = 3 + Math.ceil(n / 3);
     // greenery round the mouth of the paper, behind the heads
     for (let k = 0; k < m; k++) {
-      const th = (k / m) * TAU + rnd() * 0.3, base = [Math.cos(th) * 0.2, 0.3, Math.sin(th) * 0.2];
+      const th = (k / m) * TAU + rnd() * 0.3, gy = fit.h * 0.6, gr = (R0 + gy * fit.tan) * 0.7, base = [Math.cos(th) * gr, gy, Math.sin(th) * gr];
       const d = norm([Math.cos(th) * 0.85, 0.45 + rnd() * 0.3, Math.sin(th) * 0.85]);
       leaf(cl, base, d, norm(cross(d, [0, 1, 0])), 0.16 + rnd() * 0.07, 0.04, k % 2 ? 'leaf' : 'leafD', { droop: 0.08, sw: 0.6, ph: k, g: GREEN, ao: 0.6 });
     }
-    P.forEach(({ it, v: dv, filler }, i) => {
+    P.forEach(({ it, v: dv, c }, i) => {
       const ph = Math.atan2(dv[2], dv[0]);
-      const c = add(Fp, mul(dv, Rd + (filler ? -0.06 : (i % 2 ? -0.04 : 0.02)) + (rnd() - 0.5) * 0.03 + (it.sp.lift || 0)));
       const F = frame(c, add(dv, [0, 0.2, 0.45]), hk), o = { g: cl.groups.length, sw: 1, ph: i * 1.7 };
       cl.groups.push(c);
       // the stem: straight from the cut end to the ribbon, then a soft curve up to the head
-      const bind = [Math.cos(ph) * 0.03, 0, Math.sin(ph) * 0.03], foot = [Math.cos(ph) * 0.05, -0.42 - rnd() * 0.04, Math.sin(ph) * 0.05];
+      const bind = [Math.cos(ph) * 0.03, 0, Math.sin(ph) * 0.03], foot = [Math.cos(ph) * 0.05, -0.4 - rnd() * 0.04, Math.sin(ph) * 0.05];
       const base = sub(c, mul(F.d, 0.02)), ctrl = [bind[0] + (base[0] - bind[0]) * 0.15, bind[1] + (base[1] - bind[1]) * 0.75, bind[2] + (base[2] - bind[2]) * 0.15];
       const B = (t) => add(add(mul(bind, (1 - t) * (1 - t)), mul(ctrl, 2 * (1 - t) * t)), mul(base, t * t));
       curve(cl, (t) => add(mul(foot, 1 - t), mul(bind, t)), 0.45, 'stem', { ao: 0.8, g: GREEN });
@@ -409,7 +422,7 @@
       }
       it.sp.build(cl, F, rnd, o);
     });
-    return { cl, target: [0, 0.3, 0] };
+    return { cl, target: [0, 0.45, 0] };
   }
   // One flower on its own, turned three-quarters toward the camera (the counter's thumbnails)
   function single(id) {
@@ -433,14 +446,16 @@
       new IntersectionObserver((es) => { this.visible = es[0].isIntersecting; }).observe(canvas);
       this.bindInput();
       const loop = (now) => {
+        if (this.dead) return;
         requestAnimationFrame(loop);
         if (!this.visible || document.hidden || now - this.last < 33) return;
         const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
         if (REDUCED && !this.dirty) return;
         this.step(dt); this.draw(this.t); this.dirty = false;
       };
-      setTimeout(() => requestAnimationFrame(loop), this.o.delay || 0);   // a still frame first, so the page's own intro plays smoothly
+      setTimeout(() => { this.started = true; requestAnimationFrame(loop); }, this.o.delay || 0);   // a still frame first, so the page's own intro plays smoothly
     }
+    destroy() { this.dead = true; }
     setScene(sc, animate) {
       this.pts = Float32Array.from(sc.cl.d); this.n = sc.cl.d.length / STRIDE;
       this.groups = Float32Array.from(sc.cl.groups.flat()); this.target = sc.target; this.hasFlowers = sc.cl.groups.length > 0;
@@ -452,7 +467,8 @@
       }
       this.fit = fit * 0.93;
       if (!this.o.thumb) { this.target = [sc.target[0], (y0 + y1) / 2, sc.target[2]]; this.zoom = 1; this.pan = [0, 0]; this.settle = 3; }
-      if (animate && !REDUCED) this.grow = 0;
+      // grow the heads in only once the loop is running; before that the still frame must show them at full size
+      if (animate && !REDUCED && this.started) this.grow = 0;
       this.dirty = true; this.draw(this.t);
     }
     resize() {
@@ -542,6 +558,18 @@
         if (sw && anim) { const ph = P[o + 13]; x += Math.sin(t * 1.1 + ph) * 0.009 * sw; z += Math.cos(t * 0.8 + ph * 1.3) * 0.007 * sw; }
         put(x, y, z, P[o + 3], P[o + 4], P[o + 5], P[o + 6], P[o + 7], P[o + 8], P[o + 9], P[o + 10], P[o + 11], k, g);
       }
+      // auto-frame (before the pollen, which drifts wide): measure what was drawn and ease zoom and centring toward filling ~88% of the frame
+      if (!this.o.thumb && this.n) {
+        let x0 = COLS, x1 = -1, y0 = ROWS, y1 = -1;
+        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (zb[y * COLS + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+        if (x1 >= 0) {
+          const want = Math.min((0.88 * COLS) / (x1 - x0 + 1), (0.88 * ROWS) / (y1 - y0 + 1));
+          const k = this.settle > 0 ? 1 : 0.04;
+          this.zoom = clamp(this.zoom * (1 + (want - 1) * k), 0.3, 4);
+          this.pan[0] += (COLS / 2 - (x0 + x1 + 1) / 2) * k; this.pan[1] += (ROWS / 2 - (y0 + y1 + 1) / 2) * k;
+          if (this.settle > 0) { this.settle--; return this.draw(t); }   // a couple of passes so the first frame is already framed
+        }
+      }
       // pollen drifting round the heads, and a firefly
       if (this.hasFlowers && !this.o.thumb) {
         for (let m = 0; m < 9; m++) {
@@ -577,18 +605,6 @@
           const i = y * COLS + x;
           if (x + 1 < COLS) sep(i, i + 1);
           if (y + 1 < ROWS) sep(i, i + COLS);
-        }
-      }
-      // auto-frame: measure what was drawn and ease zoom and centring toward filling ~88% of the frame
-      if (!this.o.thumb && this.n) {
-        let x0 = COLS, x1 = -1, y0 = ROWS, y1 = -1;
-        for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (zb[y * COLS + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
-        if (x1 >= 0) {
-          const want = Math.min((0.88 * COLS) / (x1 - x0 + 1), (0.88 * ROWS) / (y1 - y0 + 1));
-          const k = this.settle > 0 ? 1 : 0.04;
-          this.zoom = clamp(this.zoom * (1 + (want - 1) * k), 0.3, 4);
-          this.pan[0] += (COLS / 2 - (x0 + x1 + 1) / 2) * k; this.pan[1] += (ROWS / 2 - (y0 + y1 + 1) / 2) * k;
-          if (this.settle > 0) { this.settle--; return this.draw(t); }   // a couple of passes so the first frame is already framed
         }
       }
       // paint: one fill colour at a time

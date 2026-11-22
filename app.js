@@ -54,10 +54,15 @@
     document.title = b.from ? `Flowers from ${b.from}` : 'Someone sent you flowers';
     $('#g-k').textContent = b.from ? `a delivery from ${b.from}` : 'a delivery';
     $('#g-to').innerHTML = b.to ? `For <em>${esc(b.to)}</em>` : `Flowers, <em>for you</em>`;
+    // the bouquet takes the screen above the veil; keep it in step with the veil's height
+    const veil = $('#g-veil'), fit = () => $('#gift').style.setProperty('--veil', veil.offsetHeight + 'px');
+    if (!gift3d) new ResizeObserver(fit).observe(veil);
+    const msg = $('#g-msg');
+    // hold the note's space with its own noise first, so the veil (and the bouquet above it) doesn't jump when it decodes
+    if (b.msg) { msg.textContent = b.msg.replace(/\S/g, '0'); setTimeout(() => decode(msg, b.msg), 900); } else $('#g-card').hidden = !b.from;
+    fit();
     gift3d = gift3d || new B3D.Renderer($('#g-art'), { yaw: 0.4, delay: 2000 });
     gift3d.setScene(B3D.build(b.ids, b.wrap, b.seed), true);
-    const msg = $('#g-msg');
-    if (b.msg) { msg.textContent = ''; setTimeout(() => decode(msg, b.msg), 900); } else $('#g-card').hidden = !b.from;
     $('#g-from').textContent = b.from ? '— ' + b.from : '';
     const counts = {};
     b.ids.forEach((i) => (counts[i] = (counts[i] || 0) + 1));

@@ -85,16 +85,24 @@
   </main>
 
   <!-- ── the delivery: what the recipient opens ── -->
+  <!--    the bouquet fills the screen, the name sits small at the top, the note on a veil across the bottom -->
   <main class="gift" id="gift" hidden>
-    <p class="tag" id="g-k">a delivery</p>
-    <h1 class="g-to" id="g-to"></h1>
-    <figure class="g-plate"><canvas class="art" id="g-art" role="img" aria-label="A bouquet in 3D. Drag to turn it."></canvas><figcaption class="hint">drag to turn</figcaption></figure>
-    <article class="g-card" id="g-card">
-      <p class="g-msg" id="g-msg" dir="auto"></p>
-      <p class="g-from" id="g-from" dir="auto"></p>
-    </article>
-    <p class="g-list" id="g-list"></p>
-    <a class="btn" href="./" data-home>Send flowers of your own →</a>
+    <div class="g-art"><canvas class="art" id="g-art" role="img" aria-label="A bouquet in 3D. Drag to turn it."></canvas></div>
+    <header class="g-head">
+      <p class="tag" id="g-k">a delivery</p>
+      <h1 class="g-to" id="g-to"></h1>
+    </header>
+    <section class="g-veil" id="g-veil">
+      <article class="g-card" id="g-card">
+        <p class="g-msg" id="g-msg" dir="auto"></p>
+        <p class="g-from" id="g-from" dir="auto"></p>
+      </article>
+      <footer class="g-foot">
+        <p class="g-list" id="g-list"></p>
+        <span class="hint">drag the bouquet to turn it</span>
+        <a class="btn" href="./" data-home>Send flowers of your own →</a>
+      </footer>
+    </section>
   </main>
 
   <script src="bouquet3d.js"></script>
