@@ -22,7 +22,7 @@
       back1: '← Flowers', next2: 'Tie the ribbon →',
       s3tag: 'step 03 · delivery', s3h: 'Your bouquet is <em>ready</em>', s3lead: 'Send this link. The flowers and your note are packed into it.',
       linkAria: 'Bouquet link', copy: 'Copy link', copied: 'copied. now send it to them.', preview: 'Preview what they\'ll see ↗', back2: '← Edit note', again: 'Start a new bouquet',
-      drag: 'drag to turn', dragGift: 'drag the bouquet to turn it', read: 'Read the note ↑', readFrom: (f) => `Read ${f}'s note ↑`, hide: 'Hide the note ↓', save: 'Save as image', saving: 'Saving…', own: 'Send flowers of your own →',
+      drag: 'drag to turn', dragGift: 'drag the bouquet to turn it', read: 'Read the note ↑', readFrom: (f) => `Read ${f}'s note ↑`, hide: 'Hide the note ↓', save: 'Save as image', gif: 'Save as GIF', saving: 'Saving…', own: 'Send flowers of your own →',
       add: (n) => `Add a ${n}`, rm: (n) => `Remove a ${n}`,
       tally: (n) => (n ? `${n} stem${n > 1 ? 's' : ''}${n >= MAX ? ' · full' : ''}` : 'an empty wrap'),
       paper: (w) => `${w.toLowerCase()} paper`,
@@ -40,7 +40,7 @@
       back1: '→ الورد', next2: 'اربط الشريطة ←',
       s3tag: 'الخطوة ٣ · التوصيل', s3h: 'باقتك <em>جاهزة</em>', s3lead: 'أرسل هذا الرابط؛ ففيه الورد وبطاقتك.',
       linkAria: 'رابط الباقة', copy: 'انسخ الرابط', copied: 'نُسخ الرابط. أرسله الآن.', preview: 'شاهد ما سيرونه ↗', back2: '→ عدّل البطاقة', again: 'باقة جديدة',
-      drag: 'اسحب للتدوير', dragGift: 'اسحب الباقة لتدويرها', read: 'اقرأ البطاقة ↑', readFrom: (f) => `اقرأ بطاقة ${f} ↑`, hide: 'أخفِ البطاقة ↓', save: 'احفظها صورة', saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
+      drag: 'اسحب للتدوير', dragGift: 'اسحب الباقة لتدويرها', read: 'اقرأ البطاقة ↑', readFrom: (f) => `اقرأ بطاقة ${f} ↑`, hide: 'أخفِ البطاقة ↓', save: 'احفظها صورة', gif: 'احفظها GIF متحركة', saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
       add: (n) => `أضف ${n}`, rm: (n) => `احذف ${n}`,
       tally: (n) => (n ? `الأغصان: ${n}${n >= MAX ? ' · ممتلئة' : ''}` : 'غلاف فارغ'),
       paper: (w) => `ورق ${w}`,
@@ -180,56 +180,103 @@
     setTimeout(() => $('#g-card').focus({ preventScroll: true }), REDUCED ? 0 : 500);
   }
 
-  // ── Save as image: the bouquet as it is right now, with the name and the note, in a portrait card ──
+  // ── Saving: the bouquet with the name and the note, in a portrait card, as a still or a turning GIF ──
+  // The card without the bouquet; returns it and the box the bouquet goes in
+  async function card(b) {
+    const ar = lang === 'ar', serif = ar ? '"Amiri", "IBM Plex Serif", serif' : '"IBM Plex Serif", serif', mono = '"JetBrains Mono", monospace';
+    await Promise.all([`italic 64px ${serif}`, `34px ${serif}`, `22px ${mono}`].map((f) => document.fonts.load(f, b.msg + b.to + b.from).catch(() => {})));
+    const W = 1080, H = 1350, c = document.createElement('canvas'), x = c.getContext('2d');
+    c.width = W; c.height = H;
+    x.fillStyle = '#0b0c0e'; x.fillRect(0, 0, W, H);
+    const g = x.createRadialGradient(W * 0.85, -80, 0, W * 0.85, -80, 700); g.addColorStop(0, '#1a1f1a'); g.addColorStop(1, '#0b0c0e00');
+    x.fillStyle = g; x.fillRect(0, 0, W, H);
+    x.textAlign = 'center'; x.direction = ar ? 'rtl' : 'ltr';
+    x.fillStyle = '#8a8a9a'; x.font = `500 22px ${mono}`;
+    x.fillText((b.from ? t('deliveryFrom', b.from) : t('delivery')).toUpperCase(), W / 2, 110);
+    x.font = `italic 64px ${serif}`; x.fillStyle = '#ff8a8a';
+    x.fillText(b.to ? (ar ? `إلى ${b.to}` : `For ${b.to}`) : (ar ? 'ورودٌ لك' : 'Flowers, for you'), W / 2, 200);
+    const box = { x: 70, y: 250, w: W - 140, h: b.msg ? 630 : 880 };
+    // the note, wrapped to the card
+    let y = box.y + box.h + 50;
+    const rtl = ar || /[֐-ࣿ]/.test(b.msg), tx = rtl ? W - 100 : 100;
+    x.textAlign = rtl ? 'right' : 'left'; x.direction = rtl ? 'rtl' : 'ltr';
+    x.font = `34px ${serif}`; x.fillStyle = '#cfcfcf';
+    for (const para of b.msg.split('\n')) {
+      let line = '';
+      for (const word of para.split(' ')) {
+        const test = line ? line + ' ' + word : word;
+        if (x.measureText(test).width > W - 200 && line) { x.fillText(line, tx, y); y += 54; line = word; } else line = test;
+        if (y > H - 190) break;
+      }
+      if (y > H - 190) { x.fillText(line + '…', tx, y); break; }
+      x.fillText(line, tx, y); y += 54;
+    }
+    if (b.from) { x.textAlign = rtl ? 'left' : 'right'; x.font = `italic 40px ${serif}`; x.fillStyle = '#e8e4d0'; x.fillText('— ' + b.from, rtl ? 100 : W - 100, Math.min(y + 30, H - 120)); }
+    x.textAlign = 'center'; x.direction = 'ltr'; x.font = `20px ${mono}`; x.fillStyle = '#5a5a66';
+    x.fillText('yourFlorist', W / 2, H - 50);
+    return { c, box };
+  }
+  // what's actually drawn on the bouquet's canvas, as a crop rectangle (padded by a share of its size)
+  function drawn(src, pad = 0) {
+    const px = src.getContext('2d').getImageData(0, 0, src.width, src.height).data;
+    let x0 = src.width, x1 = 0, y0 = src.height, y1 = 0;
+    for (let yy = 0; yy < src.height; yy += 2) for (let xx = 0; xx < src.width; xx += 2) if (px[(yy * src.width + xx) * 4 + 3]) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
+    if (x1 <= x0) return { x: 0, y: 0, w: src.width, h: src.height };
+    const dx = (x1 - x0) * pad, dy = (y1 - y0) * pad * 0.4;
+    x0 = Math.max(0, x0 - dx); y0 = Math.max(0, y0 - dy); x1 = Math.min(src.width - 2, x1 + dx); y1 = Math.min(src.height - 2, y1 + dy);
+    return { x: x0, y: y0, w: x1 - x0 + 2, h: y1 - y0 + 2 };
+  }
+  // the crop, scaled to fill the box
+  function place(x, src, r, box) {
+    const k = Math.min(box.w / r.w, box.h / r.h);
+    x.drawImage(src, r.x, r.y, r.w, r.h, box.x + (box.w - r.w * k) / 2, box.y + (box.h - r.h * k) / 2, r.w * k, r.h * k);
+  }
+  async function deliver(blob, ext) {
+    const b = current, name = `bouquet${b.to ? '-for-' + b.to.replace(/[^\p{L}\p{N}]+/gu, '-') : ''}.${ext}`;
+    const file = new File([blob], name, { type: blob.type });
+    if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer: coarse)').matches) await navigator.share({ files: [file] }).catch(() => {});
+    else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+  }
+
   async function saveImage() {
     const b = current, src = $('#g-art'), btn = $('#save');
     if (!b) return;
     btn.disabled = true; btn.textContent = t('saving');
     try {
-      const ar = lang === 'ar', serif = ar ? '"Amiri", "IBM Plex Serif", serif' : '"IBM Plex Serif", serif', mono = '"JetBrains Mono", monospace';
-      await Promise.all([`italic 64px ${serif}`, `34px ${serif}`, `22px ${mono}`].map((f) => document.fonts.load(f, b.msg + b.to + b.from).catch(() => {})));
-      const W = 1080, H = 1350, c = document.createElement('canvas'), x = c.getContext('2d');
-      c.width = W; c.height = H;
-      x.fillStyle = '#0b0c0e'; x.fillRect(0, 0, W, H);
-      const g = x.createRadialGradient(W * 0.85, -80, 0, W * 0.85, -80, 700); g.addColorStop(0, '#1a1f1a'); g.addColorStop(1, '#0b0c0e00');
-      x.fillStyle = g; x.fillRect(0, 0, W, H);
-      x.textAlign = 'center'; x.direction = ar ? 'rtl' : 'ltr';
-      x.fillStyle = '#8a8a9a'; x.font = `500 22px ${mono}`;
-      x.fillText((b.from ? t('deliveryFrom', b.from) : t('delivery')).toUpperCase(), W / 2, 110);
-      x.font = `italic 64px ${serif}`; x.fillStyle = '#ff8a8a';
-      x.fillText(b.to ? (ar ? `إلى ${b.to}` : `For ${b.to}`) : (ar ? 'ورودٌ لك' : 'Flowers, for you'), W / 2, 200);
-      // the bouquet: cropped to what's actually drawn, then scaled to fill its box
-      const px = src.getContext('2d').getImageData(0, 0, src.width, src.height).data;
-      let x0 = src.width, x1 = 0, y0 = src.height, y1 = 0;
-      for (let yy = 0; yy < src.height; yy += 2) for (let xx = 0; xx < src.width; xx += 2) if (px[(yy * src.width + xx) * 4 + 3]) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (yy < y0) y0 = yy; if (yy > y1) y1 = yy; }
-      if (x1 <= x0) { x0 = 0; y0 = 0; x1 = src.width; y1 = src.height; }
-      const sw = x1 - x0 + 2, sh = y1 - y0 + 2;
-      const box = { x: 70, y: 250, w: W - 140, h: b.msg ? 630 : 880 }, k = Math.min(box.w / sw, box.h / sh);
-      x.drawImage(src, x0, y0, sw, sh, box.x + (box.w - sw * k) / 2, box.y + (box.h - sh * k) / 2, sw * k, sh * k);
-      // the note, wrapped to the card
-      let y = box.y + box.h + 50;
-      const rtl = ar || /[֐-ࣿ]/.test(b.msg), tx = rtl ? W - 100 : 100;
-      x.textAlign = rtl ? 'right' : 'left'; x.direction = rtl ? 'rtl' : 'ltr';
-      x.font = `34px ${serif}`; x.fillStyle = '#cfcfcf';
-      for (const para of b.msg.split('\n')) {
-        let line = '';
-        for (const word of para.split(' ')) {
-          const test = line ? line + ' ' + word : word;
-          if (x.measureText(test).width > W - 200 && line) { x.fillText(line, tx, y); y += 54; line = word; } else line = test;
-          if (y > H - 190) break;
-        }
-        if (y > H - 190) { x.fillText(line + '…', tx, y); break; }
-        x.fillText(line, tx, y); y += 54;
-      }
-      if (b.from) { x.textAlign = rtl ? 'left' : 'right'; x.font = `italic 40px ${serif}`; x.fillStyle = '#e8e4d0'; x.fillText('— ' + b.from, rtl ? 100 : W - 100, Math.min(y + 30, H - 120)); }
-      x.textAlign = 'center'; x.direction = 'ltr'; x.font = `20px ${mono}`; x.fillStyle = '#5a5a66';
-      x.fillText('yourFlorist', W / 2, H - 50);
-      const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
-      const name = `bouquet${b.to ? '-for-' + b.to.replace(/[^\p{L}\p{N}]+/gu, '-') : ''}.png`;
-      const file = new File([blob], name, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] }) && matchMedia('(pointer: coarse)').matches) await navigator.share({ files: [file] }).catch(() => {});
-      else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }
+      const { c, box } = await card(b);
+      place(c.getContext('2d'), src, drawn(src), box);
+      await deliver(await new Promise((r) => c.toBlob(r, 'image/png')), 'png');
     } finally { btn.disabled = false; btn.textContent = t('save'); }
+  }
+
+  // The GIF: one full turn of the bouquet, bits flickering, on the same card at two-thirds the size
+  async function saveGif() {
+    const b = current, src = $('#g-art'), btn = $('#gif'), r3d = gift3d;
+    if (!b || !r3d) return;
+    btn.disabled = true; btn.textContent = t('saving');
+    const tick = () => new Promise((r) => requestAnimationFrame(r));
+    try {
+      const { c: base, box } = await card(b);
+      const S = 2 / 3, W = 720, H = 900, out = document.createElement('canvas'), x = out.getContext('2d', { willReadFrequently: true });
+      out.width = W; out.height = H;
+      const bx = { x: Math.floor(box.x * S), y: Math.floor(box.y * S), w: Math.ceil(box.w * S), h: Math.ceil(box.h * S) };
+      const N = 40, yaw0 = r3d.yaw, frames = [];
+      r3d.hold(true);
+      try {
+        r3d.shot(yaw0, 0);
+        const crop = drawn(src, 0.12);
+        for (let i = 0; i < N; i++) {
+          r3d.shot(yaw0 + (i / N) * Math.PI * 2, 0.08);
+          x.drawImage(base, 0, 0, W, H);
+          place(x, src, crop, bx);
+          // after the first frame only the bouquet's box changes
+          frames.push(i ? { ...bx, data: x.getImageData(bx.x, bx.y, bx.w, bx.h).data } : { x: 0, y: 0, w: W, h: H, data: x.getImageData(0, 0, W, H).data });
+          if (i % 4 === 3) { btn.textContent = `${t('saving')} ${Math.round((i / N) * 80)}%`; await tick(); }
+        }
+      } finally { r3d.hold(false); }
+      btn.textContent = `${t('saving')} 80%`; await tick();
+      await deliver(GIF.encode(W, H, frames, 8), 'gif');
+    } finally { btn.disabled = false; btn.textContent = t('gif'); }
   }
 
   // ════ The florist ════
@@ -336,6 +383,7 @@
       save(); renderPlate(true); go(1);
     };
     $('#save').onclick = saveImage;
+    $('#gif').onclick = saveGif;
     $('#g-read').onclick = () => setNote(true);
     $('#g-hide').onclick = () => { setNote(false); $('#g-read').focus({ preventScroll: true }); };
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#gift').classList.contains('is-open')) $('#g-hide').click(); });

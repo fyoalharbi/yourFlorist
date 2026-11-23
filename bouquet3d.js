@@ -453,7 +453,7 @@
       const loop = (now) => {
         if (this.dead) return;
         requestAnimationFrame(loop);
-        if (!this.visible || document.hidden || now - this.last < (LITE ? 42 : 33)) return;
+        if (this.held || !this.visible || document.hidden || now - this.last < (LITE ? 42 : 33)) return;
         const dt = Math.min(0.05, (now - this.last) / 1000); this.last = now;
         if (REDUCED && !this.dirty) return;
         this.step(dt); this.draw(this.t); this.dirty = false;
@@ -461,6 +461,17 @@
       setTimeout(() => { this.started = true; if (this.o.reveal && !REDUCED) this.grow = 0; requestAnimationFrame(loop); }, this.o.delay || 0);   // a still frame first, so the page's own intro plays smoothly
     }
     destroy() { this.dead = true; }
+    // recording: pause the live loop and draw chosen frames by hand, with the framing held still
+    // (and eased out a little, so nothing leaves the frame as it turns) so a full turn loops cleanly
+    hold(on) {
+      this.held = on;
+      if (on) { this.kept = this.zoom; this.zoom *= 0.9; } else { this.zoom = this.kept; this.dirty = true; }
+    }
+    shot(yaw, dt) {
+      this.yaw = yaw; this.grow = 1; this.t += dt;
+      for (let i = 0; i < 160; i++) this.bits[(Math.random() * 8192) | 0] ^= 1;
+      this.draw(this.t);
+    }
     setScene(sc, animate) {
       let d = sc.cl.d;
       const cap = 46000;
@@ -572,7 +583,7 @@
         put(x, y, z, P[o + 3], P[o + 4], P[o + 5], P[o + 6], P[o + 7], P[o + 8], P[o + 9], P[o + 10], P[o + 11], k, g);
       }
       // auto-frame (before the pollen, which drifts wide): measure what was drawn and ease zoom and centring toward filling ~88% of the frame
-      if (!this.o.thumb && this.n) {
+      if (!this.o.thumb && this.n && !this.held) {
         let x0 = COLS, x1 = -1, y0 = ROWS, y1 = -1;
         for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (zb[y * COLS + x]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
         if (x1 >= 0) {

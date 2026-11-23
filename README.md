@@ -14,13 +14,15 @@ stems and leaves in line glyphs, folded paper with a ribbon. Drag it to turn it.
 - **Links** (`#g=`): a few bytes for the flowers, wrap, language and centre flower, then the
   words, deflated when that's shorter. Old `#b=` links still open.
 - **English and Arabic.** The recipient sees the page in the sender's language, and can switch.
-- **The recipient** can save the bouquet and the note as an image.
+- **The recipient** can save the bouquet and the note as an image, or as a GIF of the bouquet
+  turning (encoded in the browser by `gif.js`, no libraries).
 
 ## Files
 
 - `index.html`, `style.css`: the page and its look
-- `app.js`: the composer, the link format, the gift page, saving the image, English/Arabic
+- `app.js`: the composer, the link format, the gift page, saving the image and the GIF, English/Arabic
 - `bouquet3d.js`: the flowers, the wrap, and the 3D ASCII renderer
+- `gif.js`: a small animated-GIF encoder for saving the turning bouquet
 - `og.png`: the image shown when a link is pasted into a chat
 
 ## Run locally
