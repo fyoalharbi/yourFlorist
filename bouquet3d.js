@@ -406,10 +406,31 @@
         }
       }
     };
-    const given = opts.place && opts.place.length === main.length;
+    // a saved arrangement has every flower (or, in the first links that carried one, only the big ones)
+    const all = opts.place && opts.place.length === main.length + fill.length, given = all || (opts.place && opts.place.length === main.length);
     if (given) P.forEach((q, i) => (q.v = unquant(opts.place[i])));
     else relax(60);
-    if (opts.pin && P[opts.pin.i]) { P[opts.pin.i].v = opts.pin.v; relax(40, opts.pin.i, false); }
+    const pin = opts.pin && opts.pin.i < main.length + fill.length ? opts.pin : null;
+    if (pin && pin.i < main.length) { P[pin.i].v = pin.v; relax(40, pin.i, false); }
+    // fillers go into the biggest gaps between the heads, a little behind them
+    const cand = Array.from({ length: 240 }, (_, k) => onDome(Math.acos(1 - (1 - Math.cos(CAPMAX + 0.1)) * ((k + 0.5) / 240)), k * 2.39996 + rot));
+    const placed = P.map((q) => ({ v: q.v, a: ang(q.it) }));
+    for (const [k, it] of fill.entries()) {
+      if (all) { P.push({ it, v: unquant(opts.place[main.length + k]), filler: true }); continue; }
+      let best = cand[0], bs = -Infinity;
+      const reach = placed.reduce((r, q) => Math.max(r, angle(q.v, UP)), 0.15) + 0.1;   // stay inside the cluster
+      const need = ang(it) * 1.2;
+      for (const v of cand) {
+        if (angle(v, UP) > reach) continue;
+        let clear = Infinity;
+        for (const q of placed) clear = Math.min(clear, angle(v, q.v) - q.a);
+        const sc = Math.min(clear, need) - angle(v, UP) * 0.25;   // any gap big enough will do; prefer one nearer the top
+        if (sc > bs) { bs = sc; best = v; }
+      }
+      placed.push({ v: best, a: ang(it) * 1.4 });
+      P.push({ it, v: best, filler: true });
+    }
+    if (pin && pin.i >= main.length) P[pin.i].v = pin.v;   // a filler goes where it's put; the heads don't mind it
     const place = P.map((q) => quant(q.v));
     return { main, fill, P, hk, Rd, ang, rot, place };
   }
@@ -442,24 +463,7 @@
     const rnd = seeded('3d' + seed), cl = new Cloud(), Wp = WRAPS[wrapIdx] || WRAPS[0];
     const n = ids.length;
     if (!n) { wrapping(cl, Wp, seeded('wrap' + seed)); if (opts.card) card(cl, { h: 0.9, tan: 0.8 }, seeded('card' + seed)); return { cl, target: [0, 0.15, 0] }; }
-    const { main, fill, P, hk, Rd, ang, rot, place } = layout(ids, rnd, center, opts), Fp = [0, 0, 0], UP = [0, 1, 0];
-    // fillers go into the biggest gaps between the heads, a little behind them
-    const cand = Array.from({ length: 240 }, (_, k) => onDome(Math.acos(1 - (1 - Math.cos(CAPMAX + 0.1)) * ((k + 0.5) / 240)), k * 2.39996 + rot));
-    const placed = P.map((q) => ({ v: q.v, a: ang(q.it) }));
-    for (const it of fill) {
-      let best = cand[0], bs = -Infinity;
-      const reach = placed.reduce((r, q) => Math.max(r, angle(q.v, UP)), 0.15) + 0.1;   // stay inside the cluster
-      const need = ang(it) * 1.2;
-      for (const v of cand) {
-        if (angle(v, UP) > reach) continue;
-        let clear = Infinity;
-        for (const q of placed) clear = Math.min(clear, angle(v, q.v) - q.a);
-        const sc = Math.min(clear, need) - angle(v, UP) * 0.25;   // any gap big enough will do; prefer one nearer the top
-        if (sc > bs) { bs = sc; best = v; }
-      }
-      placed.push({ v: best, a: ang(it) * 1.4 });
-      P.push({ it, v: best, filler: true });
-    }
+    const { main, P, hk, Rd, place } = layout(ids, rnd, center, opts), Fp = [0, 0, 0];
     for (const [i, q] of P.entries()) q.c = add(Fp, mul(q.v, Rd + (q.filler ? -0.06 : (i % 2 ? -0.04 : 0.02)) + (rnd() - 0.5) * 0.03 + (q.it.sp.lift || 0)));
     // the paper: tall enough that only the crown of the bouquet rises above it, flared just enough
     // that every head's back half sits inside it, as florists wrap around what they've gathered
@@ -497,7 +501,7 @@
       it.sp.build(cl, F, rnd, o, it.sp);
       for (let q = own + 15; q < cl.d.length; q += STRIDE) cl.d[q] = i;
     });
-    return { cl, target: [0, 0.45, 0], vs: P.filter((q) => !q.filler).map((q) => q.v), place, heads: main.length, dome: { r: Rd, cap: CAPMAX } };
+    return { cl, target: [0, 0.45, 0], vs: P.map((q) => q.v), place, heads: P.length, dome: { r: Rd, cap: CAPMAX } };
   }
   // One flower on its own, turned three-quarters toward the camera (the counter's thumbnails)
   function single(id) {

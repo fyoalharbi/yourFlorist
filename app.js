@@ -113,8 +113,8 @@
 
   // ════ The link ════
   // v2 (#g=): a few bytes of header, the flowers packed two per byte, then the words, deflated when that's shorter.
-  //   [2] [wrap:3 | ar:1 | deflated:1 | placed:1] [count:4 | centre:4] [ids, 4 bits each…] [seed: 3 bytes]
-  //   [if placed: each head's spot on the dome, 2 bytes: 6 bits down from the top, 10 bits round] [to \0 from \0 message]
+  //   [2] [wrap:3 | ar:1 | deflated:1 | heads placed:1 | all placed:1] [count:4 | centre:4] [ids, 4 bits each…] [seed: 3 bytes]
+  //   [if placed: each flower's spot on the dome (or only the big ones', in the first links that carried this), 2 bytes: 6 bits down from the top, 10 bits round] [to \0 from \0 message]
   // v1 (#b=) was base64 JSON; those links still open.
   const b64 = (bytes) => { let bin = ''; bytes.forEach((x) => (bin += String.fromCharCode(x))); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
   const unb64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
@@ -131,7 +131,7 @@
     const n = b.ids.length, ids = new Uint8Array(Math.ceil(n / 2));
     b.ids.forEach((id, i) => (ids[i >> 1] |= id << ((i & 1) * 4)));
     const placed = b.place && b.place.length ? 1 : 0, spots = placed ? b.place.flatMap(([tq, pq]) => [(tq << 2) | (pq >> 8), pq & 255]) : [];
-    const head = [2, (b.wrap & 7) | ((b.lang === 'ar' ? 1 : 0) << 3) | (deflated << 4) | (placed << 5), (n & 15) | ((b.center >= 0 ? b.center : AUTO) << 4)];
+    const head = [2, (b.wrap & 7) | ((b.lang === 'ar' ? 1 : 0) << 3) | (deflated << 4) | (placed << 6), (n & 15) | ((b.center >= 0 ? b.center : AUTO) << 4)];
     const seed = [b.seed & 255, (b.seed >> 8) & 255, (b.seed >> 16) & 255];
     return b64(Uint8Array.from([...head, ...ids, ...seed, ...spots, ...text]));
   }
@@ -144,8 +144,8 @@
       for (let i = 0; i < n; i++) ids.push((a[3 + (i >> 1)] >> ((i & 1) * 4)) & 15);
       const s0 = 3 + nb, seed = a[s0] | (a[s0 + 1] << 8) | (a[s0 + 2] << 16);
       let at = s0 + 3, place = null;
-      if (a[1] & 32) {
-        const m = ids.filter((i) => SPECIES[i] && !SPECIES[i].filler).length;
+      if (a[1] & 96) {
+        const m = a[1] & 64 ? ids.length : ids.filter((i) => SPECIES[i] && !SPECIES[i].filler).length;
         place = [];
         for (let k = 0; k < m; k++, at += 2) place.push([a[at] >> 2, ((a[at] & 3) << 8) | a[at + 1]]);
       }
@@ -501,7 +501,7 @@
   // ── Moving a flower: it follows the pointer over the dome and the others make room; dropped, the arrangement is kept ──
   let plate = null, moving = null;
   function onGrab(g) {
-    if (!plate || g >= plate.heads) return false;    // the fillers tuck themselves into the gaps
+    if (!plate || g >= plate.heads) return false;
     moving = { g, place: state.place || plate.place, v: null, raf: 0, sc: plate };
     return true;
   }
