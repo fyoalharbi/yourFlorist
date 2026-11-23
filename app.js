@@ -196,22 +196,22 @@
     x.font = `italic 64px ${serif}`; x.fillStyle = '#ff8a8a';
     x.fillText(b.to ? (ar ? `إلى ${b.to}` : `For ${b.to}`) : (ar ? 'ورودٌ لك' : 'Flowers, for you'), W / 2, 200);
     const box = { x: 70, y: 250, w: W - 140, h: b.msg ? 630 : 880 };
-    // the note, wrapped to the card
+    // the note and who it is from, wrapped to the card and centred under the bouquet
     let y = box.y + box.h + 50;
-    const rtl = ar || /[֐-ࣿ]/.test(b.msg), tx = rtl ? W - 100 : 100;
-    x.textAlign = rtl ? 'right' : 'left'; x.direction = rtl ? 'rtl' : 'ltr';
+    const rtl = ar || /[֐-ࣿ]/.test(b.msg), tx = W / 2;
+    x.textAlign = 'center'; x.direction = rtl ? 'rtl' : 'ltr';
     x.font = `34px ${serif}`; x.fillStyle = '#cfcfcf';
     for (const para of b.msg.split('\n')) {
       let line = '';
       for (const word of para.split(' ')) {
         const test = line ? line + ' ' + word : word;
-        if (x.measureText(test).width > W - 200 && line) { x.fillText(line, tx, y); y += 54; line = word; } else line = test;
+        if (x.measureText(test).width > W - 260 && line) { x.fillText(line, tx, y); y += 54; line = word; } else line = test;
         if (y > H - 190) break;
       }
       if (y > H - 190) { x.fillText(line + '…', tx, y); break; }
       x.fillText(line, tx, y); y += 54;
     }
-    if (b.from) { x.textAlign = rtl ? 'left' : 'right'; x.font = `italic 40px ${serif}`; x.fillStyle = '#e8e4d0'; x.fillText('— ' + b.from, rtl ? 100 : W - 100, Math.min(y + 30, H - 120)); }
+    if (b.from) { x.font = `italic 40px ${serif}`; x.fillStyle = '#e8e4d0'; x.fillText('— ' + b.from, tx, Math.min(y + 30, H - 120)); }
     x.textAlign = 'center'; x.direction = 'ltr'; x.font = `20px ${mono}`; x.fillStyle = '#5a5a66';
     x.fillText('yourFlorist', W / 2, H - 50);
     return { c, box };
