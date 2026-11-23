@@ -16,7 +16,7 @@
     en: {
       steps: 'Steps', nav1: 'Flowers', nav2: 'Note', nav3: 'Send', other: 'العربية',
       s1tag: 'step 01 · the counter', s1h: 'Pick your <em>flowers</em>', s1lead: 'Tap a flower to add a stem. Up to twelve fit in one bouquet. Drag a flower in the bouquet to move it, or drag around it to turn it.',
-      wrapping: 'wrapping', center: 'in the centre', auto: 'let the florist choose', shuffle: 'Rearrange', clear: 'Clear', next1: 'Write a note →',
+      wrapping: 'wrapping', center: 'in the centre', auto: 'let the florist choose', surprise: 'Surprise me', shuffle: 'Rearrange', clear: 'Clear', next1: 'Write a note →',
       s2tag: 'step 02 · the card', s2h: 'Write a <em>note</em>', s2lead: 'It travels inside the link, so only people you send it to will see it.',
       to: 'To', message: 'Message', from: 'From', toPh: 'their name', msgPh: 'something only you would say…', fromPh: 'your name',
       back1: '← Flowers', next2: 'Tie the ribbon →',
@@ -35,7 +35,7 @@
     ar: {
       steps: 'الخطوات', nav1: 'الورد', nav2: 'البطاقة', nav3: 'الإرسال', other: 'English',
       s1tag: 'الخطوة ١ · اختيار الورد', s1h: 'اختر <em>ورودك</em>', s1lead: 'اضغط على الوردة لتضيف غصنًا. تتسع الباقة لاثني عشر غصنًا. اسحب وردة في الباقة لتنقلها، أو اسحب حولها لتدويرها.',
-      wrapping: 'التغليف', center: 'في الوسط', auto: 'يختار بائع الورد', shuffle: 'رتّبها من جديد', clear: 'إفراغ', next1: 'اكتب بطاقة ←',
+      wrapping: 'التغليف', center: 'في الوسط', auto: 'يختار بائع الورد', surprise: 'فاجئني', shuffle: 'رتّبها من جديد', clear: 'إفراغ', next1: 'اكتب بطاقة ←',
       s2tag: 'الخطوة ٢ · البطاقة', s2h: 'اكتب <em>بطاقة</em>', s2lead: 'تُحفظ داخل الرابط، فلا يراها إلا من ترسله إليه.',
       to: 'إلى', message: 'الرسالة', from: 'من', toPh: 'اسم من ستهديه', msgPh: 'كلامٌ لا يقوله غيرك…', fromPh: 'اسمك',
       back1: '→ الورد', next2: 'اربط الشريطة ←',
@@ -485,6 +485,17 @@
       save();
     });
     $('#center').addEventListener('change', (e) => { state.center = +e.target.value; state.place = null; renderPlate(true); save(); });
+    // a florist's pick: two to four kinds of flower, five to nine stems, sometimes a filler or two, any paper
+    $('#surprise').onclick = () => {
+      const R = (n) => (Math.random() * n) | 0, all = SPECIES.map((_, i) => i);
+      const heads = all.filter((i) => !SPECIES[i].filler).sort(() => Math.random() - 0.5), fill = all.filter((i) => SPECIES[i].filler);
+      const kinds = heads.slice(0, 2 + R(3)), ids = kinds.slice();
+      for (let n = 5 + R(5); ids.length < n; ) ids.push(kinds[R(kinds.length)]);
+      if (fill.length && Math.random() < 0.6) for (let k = 1 + R(2); k > 0; k--) ids.push(fill[R(fill.length)]);
+      state = { ...state, ids: ids.slice(0, MAX), wrap: R(WRAPS.length), seed: (Math.random() * 1e6) | 0, center: -1, place: null };
+      document.querySelectorAll('[data-wrap]').forEach((c) => c.setAttribute('aria-pressed', +c.dataset.wrap === state.wrap));
+      renderPlate(true); save();
+    };
     $('#shuffle').onclick = () => { state.seed = (Math.random() * 1e6) | 0; state.place = null; renderPlate(true); save(); };
     $('#clear').onclick = () => { state.ids = []; renderPlate(true); save(); };
     $('#card').addEventListener('input', () => {
