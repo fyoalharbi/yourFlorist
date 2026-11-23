@@ -113,8 +113,8 @@ h1 em { font-style: italic; color: var(--red); }
 .g-bar { position: fixed; z-index: 2; left: 0; right: 0; bottom: 0; display: flex; flex-direction: column; align-items: center; gap: 10px;
   padding: 30px 20px max(22px, env(safe-area-inset-bottom)); background: linear-gradient(#0b0c0e00, #0b0c0ecc 40%); transition: opacity .4s, transform .5s cubic-bezier(.2, .8, .2, 1);
   animation: up 1s cubic-bezier(.2, .8, .2, 1) 1.2s both; }
-.g-read { font-size: 14px; padding: 13px 18px; animation: glow 2.8s ease-in-out 2.4s infinite; }
-@keyframes glow { 0%, 100% { box-shadow: 0 0 0 #ff8a8a00; } 50% { box-shadow: 0 0 18px #ff8a8a44; } }
+/* the card in the bouquet is the way in; the button is only a quiet fallback */
+.btn.g-read { font-size: 12px; padding: 10px 14px; border-color: #ffffff2a; background: #0b0c0e99; }
 .gift.is-open .g-bar { opacity: 0; transform: translateY(20px); pointer-events: none; }
 .g-hide { all: unset; cursor: pointer; display: block; width: fit-content; margin: 0 auto 18px; font: 500 11px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 html[lang='ar'] .g-hide { letter-spacing: 0; font-family: 'IBM Plex Sans Arabic', var(--mono); font-size: 13px; }
@@ -131,20 +131,9 @@ html[lang='ar'] .g-hide { letter-spacing: 0; font-family: 'IBM Plex Sans Arabic'
 .g-msg { margin: 0; font: 400 20px/1.7 var(--serif); color: var(--ink-2); white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.7em; }
 .g-from { margin: 12px 0 0; text-align: end; font: italic 400 24px/1.3 var(--serif); color: var(--ink); }
 .g-from:empty { display: none; }
-/* ── the ways of opening the note ── */
-.g-env { display: none; margin: 0 auto 8px; font: 500 10px/1.05 var(--mono); color: #ff8a8acc; text-align: left; direction: ltr; }
-.gift[data-note='pull'] .g-env { display: block; }
-.gift[data-note='pull'] .g-read { touch-action: none; cursor: grab; display: flex; flex-direction: column; align-items: center; }
+/* the note: noise until it resolves */
 .g-msg span { transition: color .4s, opacity .4s; }
 .g-msg span:not(.is-on) { color: #8a8a9a; }
-.gift[data-note='rub'] .g-msg span:not(.is-on), .gift[data-note='petals'] .g-msg span:not(.is-on) { opacity: .28; }
-.gift[data-note='rub'] .g-card:not(.is-read) .g-msg { touch-action: none; cursor: crosshair; }
-.g-msg .is-later { display: none; }
-.petal { position: fixed; z-index: 20; top: 0; left: 0; pointer-events: none; font: 500 18px var(--mono); color: #ff8a8a; text-shadow: 0 0 8px #ff8a8a66; }
-.g-hint { margin: 14px 0 0; text-align: center; font: 500 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); animation: up .6s both; }
-html[lang='ar'] .g-hint { letter-spacing: 0; font-family: 'IBM Plex Sans Arabic', var(--mono); font-size: 13px; }
-.g-all { all: unset; cursor: pointer; margin-inline-start: 10px; color: var(--ink-2); border-bottom: 1px solid #ffffff33; }
-.g-all:hover { color: var(--red); } .g-all:focus-visible { outline: 1px solid var(--red); outline-offset: 3px; }
 /* the signature writes itself once the note is all there */
 .g-from { width: fit-content; margin-inline-start: auto; }
 .g-card:not(.is-read) .g-from { clip-path: inset(0 100% 0 0); }
@@ -153,13 +142,7 @@ html[lang='ar'] .g-hint { letter-spacing: 0; font-family: 'IBM Plex Sans Arabic'
 html[dir='rtl'] .g-card:not(.is-read) .g-from { clip-path: inset(0 0 0 100%); }
 html[dir='rtl'] .g-card.is-read .g-from { animation-name: sign-rtl; }
 @keyframes sign-rtl { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
-/* card: the card in the bouquet is the way in; the button is only a quiet fallback */
-.gift[data-note='card'] .g-read { animation: none; border-color: #ffffff2a; background: #0b0c0e99; font-size: 12px; padding: 10px 14px; }
-.gift[data-note='card'] #g-bar-hint { color: var(--ink-2); }
-/* the concept picker (for trying the ways out) */
-.g-mode { position: fixed; z-index: 21; top: 14px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
-.g-mode select { font: 500 12px var(--mono); color: var(--ink); background: #0b0c0ee6; border: 1px solid #ff8a8a66; padding: 5px 6px; }
-@media (max-width: 560px) { .g-mode span { display: none; } }
+#g-bar-hint { color: var(--ink-2); }
 .g-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-top: 22px; padding-top: 16px;
   background: repeating-linear-gradient(90deg, #ffffff22 0 1px, transparent 1px 12px) top left / 100% 5px no-repeat; }
 .g-list { margin: 0; flex: 1 1 100%; font: 12px/1.6 var(--mono); color: #6f9f6fcc; }

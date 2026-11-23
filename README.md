@@ -15,10 +15,8 @@ stems and leaves in line glyphs, folded paper with a ribbon. Drag it to turn it.
   flower was moved by hand) two bytes a head for the arrangement, then the words, deflated when
   that's shorter. Old `#b=` links still open.
 - **English and Arabic.** The recipient sees the page in the sender's language, and can switch.
-- **Opening the note** has six concepts to try, switched with the picker at the top of the gift page
-  (or `?note=card|pull|rub|petals|lines|classic`): by default a little envelope is tucked into the
-  bouquet and tapping it opens the note; or pull the card up, rub the bits away, tap
-  the flowers to let the words fall, a sentence per tap, or the original decode.
+- **Opening the note**: a little envelope is tucked into the bouquet; tapping it takes it out and
+  opens the note (a quiet button below does the same).
 - **The recipient** can save the bouquet and the note as an image, or as a GIF of the bouquet
   turning (encoded in the browser by `gif.js`, no libraries).
 

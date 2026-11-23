@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=IBM+Plex+Sans+Arabic:wght@400;500&family=IBM+Plex+Serif:ital,wght@0,400;1,400&family=Amiri:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=move-fillers" />
+  <link rel="stylesheet" href="style.css?v=card-only" />
 </head>
 <body>
   <header class="top">
@@ -108,17 +108,12 @@
   <!--    the bouquet fills the screen with the name small at the top; "Read the note" slides a veil up over it -->
   <main class="gift" id="gift" hidden>
     <div class="g-art"><canvas class="art" id="g-art" role="img" aria-label="A bouquet in 3D. Drag to turn it."></canvas></div>
-    <!-- concepts for opening the note: pick one to try; remove once one is chosen -->
-    <label class="g-mode"><span data-i18n="concept">note concept</span> <select id="g-mode"></select></label>
     <header class="g-head">
       <p class="tag" id="g-k">a delivery</p>
       <h1 class="g-to" id="g-to"></h1>
     </header>
     <div class="g-bar" id="g-bar">
-      <button class="btn is-go g-read" id="g-read" type="button" aria-controls="g-veil" aria-expanded="false"><pre class="g-env" aria-hidden="true"> ______________
-|\            /|
-| \____@@____/ |
-|______________|</pre><span id="g-read-l">Read the note ↑</span></button>
+      <button class="btn is-go g-read" id="g-read" type="button" aria-controls="g-veil" aria-expanded="false">Read the note ↑</button>
       <span class="hint" id="g-bar-hint" data-i18n="dragGift">drag the bouquet to turn it</span>
     </div>
     <section class="g-veil" id="g-veil" inert>
@@ -129,7 +124,6 @@
         <p class="sr-only" id="g-msg-sr" dir="auto"></p>
         <p class="g-from" id="g-from" dir="auto"></p>
       </article>
-      <p class="g-hint" id="g-hint" hidden><span id="g-hint-t"></span> <button class="g-all" id="g-all" type="button" data-i18n="all">show it all</button></p>
       <footer class="g-foot">
         <p class="g-list" id="g-list"></p>
         <span class="g-acts">
@@ -141,8 +135,8 @@
     </section>
   </main>
 
-  <script src="bouquet3d.js?v=move-fillers"></script>
-  <script src="gif.js?v=move-fillers"></script>
-  <script src="app.js?v=move-fillers"></script>
+  <script src="bouquet3d.js?v=card-only"></script>
+  <script src="gif.js?v=card-only"></script>
+  <script src="app.js?v=card-only"></script>
 </body>
 </html>
