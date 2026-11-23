@@ -589,7 +589,7 @@
     $('#g-all').onclick = revealAll;
     $('#g-mode').onchange = (e) => {
       mode = e.target.value;
-      history.replaceState(null, '', `?note=${mode}${location.hash}`);
+      history.replaceState(null, '', `?note=${mode}${location.hash.replace(/[?&]note=\w+/, '')}`);
       resetNote(current); showGift(current, true);
     };
     $('#g-hide').onclick = () => { setNote(false); $('#g-read').focus({ preventScroll: true }); };
@@ -601,6 +601,8 @@
   // ── route ──
   async function route() {
     const m = location.hash.match(/^#([bg])=([A-Za-z0-9_-]+)/);
+    const nm = location.hash.match(/[?&]note=(\w+)/);   // ?note= also works when it's put after the bouquet
+    if (nm && MODES.includes(nm[1])) mode = nm[1];
     const b = m && (m[1] === 'g' ? await unpackV2(m[2]) : unpackV1(m[2]));
     if (b) {
       if (b.lang) applyLang(b.lang, false);   // the recipient sees the page in the sender's language (the toggle still works)
