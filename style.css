@@ -163,7 +163,7 @@ html[dir='rtl'] .g-card.is-read .g-from { animation-name: sign-rtl; }
   .link { flex-direction: column; }
   .g-msg { font-size: 17.5px; }
   .g-from { font-size: 21px; }
-  .btn { padding-top: 15px; padding-bottom: 15px; }   /* tap targets of 44px or more */
+  .btn, .btn.g-read { padding-top: 15px; padding-bottom: 15px; }   /* tap targets of 44px or more */
 }
 
 /* ── language: the switch, and Arabic set in Amiri / IBM Plex Sans Arabic like the Herbarium ── */
