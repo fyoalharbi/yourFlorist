@@ -31,4 +31,5 @@ stems and leaves in line glyphs, folded paper with a ribbon. Drag it to turn it.
 python -m http.server 4321   # http://localhost:4321
 ```
 
-Pushing to `main` publishes the site via GitHub Pages.
+Pushing to `main` publishes the site via GitHub Pages. When a script or the stylesheet changes,
+bump the `?v=` on its link in `index.html` so browsers fetch the new copy.
