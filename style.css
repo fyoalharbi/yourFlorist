@@ -103,6 +103,7 @@ h1 em { font-style: italic; color: var(--red); }
 .fig { display: flex; justify-content: space-between; gap: 14px; margin-top: 16px; font: 12px/1.5 var(--mono); color: #7a7a84; }
 .art { display: block; width: 100%; height: 100%; cursor: grab; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
 .art.is-drag { cursor: grabbing; }
+.art.is-over { cursor: move; } .art.is-move { cursor: grabbing; }
 .hint { font: 11px var(--mono); letter-spacing: .08em; color: #5a5a66; }
 
 /* ── the delivery ── */

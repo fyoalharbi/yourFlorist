@@ -15,14 +15,14 @@
   const T = {
     en: {
       steps: 'Steps', nav1: 'Flowers', nav2: 'Note', nav3: 'Send', other: 'العربية',
-      s1tag: 'step 01 · the counter', s1h: 'Pick your <em>flowers</em>', s1lead: 'Tap a flower to add a stem. Up to twelve fit in one bouquet. Drag the bouquet to turn it.',
+      s1tag: 'step 01 · the counter', s1h: 'Pick your <em>flowers</em>', s1lead: 'Tap a flower to add a stem. Up to twelve fit in one bouquet. Drag a flower in the bouquet to move it, or drag around it to turn it.',
       wrapping: 'wrapping', center: 'in the centre', auto: 'let the florist choose', shuffle: 'Rearrange', clear: 'Clear', next1: 'Write a note →',
       s2tag: 'step 02 · the card', s2h: 'Write a <em>note</em>', s2lead: 'It travels inside the link, so only people you send it to will see it.',
       to: 'To', message: 'Message', from: 'From', toPh: 'their name', msgPh: 'something only you would say…', fromPh: 'your name',
       back1: '← Flowers', next2: 'Tie the ribbon →',
       s3tag: 'step 03 · delivery', s3h: 'Your bouquet is <em>ready</em>', s3lead: 'Send this link. The flowers and your note are packed into it.',
       linkAria: 'Bouquet link', copy: 'Copy link', copied: 'copied. now send it to them.', preview: 'Preview what they\'ll see ↗', back2: '← Edit note', again: 'Start a new bouquet',
-      drag: 'drag to turn', dragGift: 'drag the bouquet to turn it', read: 'Read the note ↑', readFrom: (f) => `Read ${f}'s note ↑`, hide: 'Hide the note ↓', save: 'Save as image', gif: 'Save as GIF',
+      drag: 'drag a flower to move it', dragGift: 'drag the bouquet to turn it', read: 'Read the note ↑', readFrom: (f) => `Read ${f}'s note ↑`, hide: 'Hide the note ↓', save: 'Save as image', gif: 'Save as GIF',
       pull: 'Pull the card up ↑', rub: 'Rub the note to read it', petals: 'Tap the flowers to let the words fall', more: (i, n) => `Tap for more ↓  ${i} / ${n}`, all: 'show it all',
       concept: 'note concept', cardHint: 'tap the little card in the flowers', readHere: 'or read it here ↑', modes: ['The card', 'Pull up', 'Rub', 'Petals', 'Line by line', 'Classic'], saving: 'Saving…', own: 'Send flowers of your own →',
       add: (n) => `Add a ${n}`, rm: (n) => `Remove a ${n}`,
@@ -35,14 +35,14 @@
     },
     ar: {
       steps: 'الخطوات', nav1: 'الورد', nav2: 'البطاقة', nav3: 'الإرسال', other: 'English',
-      s1tag: 'الخطوة ١ · اختيار الورد', s1h: 'اختر <em>ورودك</em>', s1lead: 'اضغط على الوردة لتضيف غصنًا. تتسع الباقة لاثني عشر غصنًا. اسحب الباقة لتدويرها.',
+      s1tag: 'الخطوة ١ · اختيار الورد', s1h: 'اختر <em>ورودك</em>', s1lead: 'اضغط على الوردة لتضيف غصنًا. تتسع الباقة لاثني عشر غصنًا. اسحب وردة في الباقة لتنقلها، أو اسحب حولها لتدويرها.',
       wrapping: 'التغليف', center: 'في الوسط', auto: 'يختار بائع الورد', shuffle: 'رتّبها من جديد', clear: 'إفراغ', next1: 'اكتب بطاقة ←',
       s2tag: 'الخطوة ٢ · البطاقة', s2h: 'اكتب <em>بطاقة</em>', s2lead: 'تُحفظ داخل الرابط، فلا يراها إلا من ترسله إليه.',
       to: 'إلى', message: 'الرسالة', from: 'من', toPh: 'اسم من ستهديه', msgPh: 'كلامٌ لا يقوله غيرك…', fromPh: 'اسمك',
       back1: '→ الورد', next2: 'اربط الشريطة ←',
       s3tag: 'الخطوة ٣ · التوصيل', s3h: 'باقتك <em>جاهزة</em>', s3lead: 'أرسل هذا الرابط؛ ففيه الورد وبطاقتك.',
       linkAria: 'رابط الباقة', copy: 'انسخ الرابط', copied: 'نُسخ الرابط. أرسله الآن.', preview: 'شاهد ما سيرونه ↗', back2: '→ عدّل البطاقة', again: 'باقة جديدة',
-      drag: 'اسحب للتدوير', dragGift: 'اسحب الباقة لتدويرها', read: 'اقرأ البطاقة ↑', readFrom: (f) => `اقرأ بطاقة ${f} ↑`, hide: 'أخفِ البطاقة ↓', save: 'احفظها صورة', gif: 'احفظها GIF متحركة',
+      drag: 'اسحب وردة لتنقلها', dragGift: 'اسحب الباقة لتدويرها', read: 'اقرأ البطاقة ↑', readFrom: (f) => `اقرأ بطاقة ${f} ↑`, hide: 'أخفِ البطاقة ↓', save: 'احفظها صورة', gif: 'احفظها GIF متحركة',
       pull: 'اسحب البطاقة للأعلى ↑', rub: 'امسح على البطاقة لتقرأها', petals: 'اضغط على الورد لتتساقط الكلمات', more: (i, n) => `اضغط للمزيد ↓  ${i} / ${n}`, all: 'أظهرها كلها',
       concept: 'طريقة فتح البطاقة', cardHint: 'اضغط على البطاقة الصغيرة بين الورد', readHere: 'أو اقرأها هنا ↑', modes: ['البطاقة في الباقة', 'السحب', 'المسح', 'البتلات', 'سطرًا سطرًا', 'الأصلية'], saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
       add: (n) => `أضف ${n}`, rm: (n) => `احذف ${n}`,
@@ -113,7 +113,8 @@
 
   // ════ The link ════
   // v2 (#g=): a few bytes of header, the flowers packed two per byte, then the words, deflated when that's shorter.
-  //   [2] [wrap:3 | ar:1 | deflated:1] [count:4 | centre:4] [ids, 4 bits each…] [seed: 3 bytes] [to \0 from \0 message]
+  //   [2] [wrap:3 | ar:1 | deflated:1 | placed:1] [count:4 | centre:4] [ids, 4 bits each…] [seed: 3 bytes]
+  //   [if placed: each head's spot on the dome, 2 bytes: 6 bits down from the top, 10 bits round] [to \0 from \0 message]
   // v1 (#b=) was base64 JSON; those links still open.
   const b64 = (bytes) => { let bin = ''; bytes.forEach((x) => (bin += String.fromCharCode(x))); return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); };
   const unb64 = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), (c) => c.charCodeAt(0));
@@ -129,9 +130,10 @@
     }
     const n = b.ids.length, ids = new Uint8Array(Math.ceil(n / 2));
     b.ids.forEach((id, i) => (ids[i >> 1] |= id << ((i & 1) * 4)));
-    const head = [2, (b.wrap & 7) | ((b.lang === 'ar' ? 1 : 0) << 3) | (deflated << 4), (n & 15) | ((b.center >= 0 ? b.center : AUTO) << 4)];
+    const placed = b.place && b.place.length ? 1 : 0, spots = placed ? b.place.flatMap(([tq, pq]) => [(tq << 2) | (pq >> 8), pq & 255]) : [];
+    const head = [2, (b.wrap & 7) | ((b.lang === 'ar' ? 1 : 0) << 3) | (deflated << 4) | (placed << 5), (n & 15) | ((b.center >= 0 ? b.center : AUTO) << 4)];
     const seed = [b.seed & 255, (b.seed >> 8) & 255, (b.seed >> 16) & 255];
-    return b64(Uint8Array.from([...head, ...ids, ...seed, ...text]));
+    return b64(Uint8Array.from([...head, ...ids, ...seed, ...spots, ...text]));
   }
   async function unpackV2(code) {
     try {
@@ -141,10 +143,16 @@
       const ids = [];
       for (let i = 0; i < n; i++) ids.push((a[3 + (i >> 1)] >> ((i & 1) * 4)) & 15);
       const s0 = 3 + nb, seed = a[s0] | (a[s0 + 1] << 8) | (a[s0 + 2] << 16);
-      let text = a.slice(s0 + 3);
+      let at = s0 + 3, place = null;
+      if (a[1] & 32) {
+        const m = ids.filter((i) => SPECIES[i] && !SPECIES[i].filler).length;
+        place = [];
+        for (let k = 0; k < m; k++, at += 2) place.push([a[at] >> 2, ((a[at] & 3) << 8) | a[at + 1]]);
+      }
+      let text = a.slice(at);
       if (a[1] & 16) text = await pipe(text, DecompressionStream);
       const [to = '', from = '', msg = ''] = new TextDecoder().decode(text).split('\0');
-      return clean({ ids, wrap: a[1] & 7, lang: a[1] & 8 ? 'ar' : 'en', center: c === AUTO ? -1 : c, seed, to, from, msg });
+      return clean({ ids, wrap: a[1] & 7, lang: a[1] & 8 ? 'ar' : 'en', center: c === AUTO ? -1 : c, seed, to, from, msg, place });
     } catch { return null; }
   }
   const ALPHA = '0123456789abcdefghijklmnopqrstuvwxyz';
@@ -157,7 +165,7 @@
   const clean = (b) => ({
     ...b, ids: b.ids.filter((i) => i >= 0 && i < SPECIES.length).slice(0, MAX), wrap: clamp(b.wrap | 0, 0, WRAPS.length - 1),
     to: String(b.to || '').slice(0, 40), from: String(b.from || '').slice(0, 40), msg: String(b.msg || '').slice(0, 600),
-    center: SPECIES[b.center] ? b.center : -1,
+    center: SPECIES[b.center] ? b.center : -1, place: Array.isArray(b.place) ? b.place : null,
   });
   const linkFor = async (b) => location.origin + location.pathname + '#g=' + (await pack({ ...b, lang }));
 
@@ -188,7 +196,7 @@
     resetNote(b);
     // reveal: the bouquet grows in once the page's own intro has played
     gift3d = gift3d || new B3D.Renderer($('#g-art'), { yaw: 0.4, delay: 700, reveal: true });
-    gift3d.setScene(B3D.build(b.ids, b.wrap, b.seed, b.center, { card: hasCard(b) }), true);
+    gift3d.setScene(B3D.build(b.ids, b.wrap, b.seed, b.center, { card: hasCard(b), place: b.place }), true);
     cardShown(true);
   }
 
@@ -485,16 +493,46 @@
 
   // ════ The florist ════
   const DRAFT = 'yourflorist:draft';
-  let state = { ids: [], wrap: 0, seed: (Math.random() * 1e6) | 0, to: '', msg: '', from: '', center: -1 };
+  let state = { ids: [], wrap: 0, seed: (Math.random() * 1e6) | 0, to: '', msg: '', from: '', center: -1, place: null };
   try { const d = JSON.parse(localStorage.getItem(DRAFT) || 'null'); if (d && Array.isArray(d.ids)) state = { ...state, ...d, ids: d.ids.filter((i) => SPECIES[i]).slice(0, MAX) }; } catch {}
   const save = () => { try { localStorage.setItem(DRAFT, JSON.stringify(state)); } catch {} };
   let step = 1;
 
+  // ── Moving a flower: it follows the pointer over the dome and the others make room; dropped, the arrangement is kept ──
+  let plate = null, moving = null;
+  function onGrab(g) {
+    if (!plate || g >= plate.heads) return false;    // the fillers tuck themselves into the gaps
+    moving = { g, place: state.place || plate.place, v: null, raf: 0, sc: plate };
+    return true;
+  }
+  function onMove(g, x, y) {
+    if (!moving) return;
+    moving.v = plate3d.domeAt(x, y, plate.dome.r, plate.dome.cap);
+    if (moving.v && !moving.raf) moving.raf = requestAnimationFrame(() => {
+      if (!moving) return;
+      moving.raf = 0;
+      const lay = B3D.arrange(state.ids, state.seed, state.center, { place: moving.place, pin: { i: g, v: moving.v } });
+      moving.lay = lay; plate3d.setScene(B3D.shift(moving.sc, moving.sc.vs, lay.vs), false, true);
+    });
+  }
+  function onDrop(g) {
+    if (!moving) return;
+    cancelAnimationFrame(moving.raf);
+    if (moving.v) {
+      state.place = B3D.arrange(state.ids, state.seed, state.center, { place: moving.place, pin: { i: g, v: moving.v } }).place;
+      plate = B3D.build(state.ids, state.wrap, state.seed, state.center, { place: state.place });   // exactly what the link will carry
+      plate3d.setScene(plate, false, true); save();
+    }
+    moving = null;
+  }
+
   function renderPlate(pop) {
     if (!$('#species').children.length) return;
     if (!state.ids.some((i) => i === state.center && !SPECIES[i].filler)) state.center = -1;
-    plate3d = plate3d || new B3D.Renderer($('#art'), { delay: 900 });
-    plate3d.setScene(B3D.build(state.ids, state.wrap, state.seed, state.center), pop);
+    plate3d = plate3d || new B3D.Renderer($('#art'), { delay: 900, onGrab, onMove, onDrop });
+    plate = B3D.build(state.ids, state.wrap, state.seed, state.center, { place: state.place });
+    if (state.place && state.place.length !== plate.heads) state.place = null;   // the flowers changed: the florist arranges them again
+    plate3d.setScene(plate, pop);
     const n = state.ids.length;
     $('#tally').textContent = t('tally', n);
     $('#wrapname').textContent = t('paper', wrapName(WRAPS[state.wrap]));
@@ -565,8 +603,8 @@
       else go(+(el.dataset.goto || el.dataset.step));
       save();
     });
-    $('#center').addEventListener('change', (e) => { state.center = +e.target.value; renderPlate(true); save(); });
-    $('#shuffle').onclick = () => { state.seed = (Math.random() * 1e6) | 0; renderPlate(true); save(); };
+    $('#center').addEventListener('change', (e) => { state.center = +e.target.value; state.place = null; renderPlate(true); save(); });
+    $('#shuffle').onclick = () => { state.seed = (Math.random() * 1e6) | 0; state.place = null; renderPlate(true); save(); };
     $('#clear').onclick = () => { state.ids = []; renderPlate(true); save(); };
     $('#card').addEventListener('input', () => {
       state.to = $('#to').value; state.msg = $('#msg').value; state.from = $('#from').value;
@@ -582,7 +620,7 @@
     };
     $('#link').addEventListener('focus', (e) => e.target.select());
     $('#again').onclick = () => {
-      state = { ids: [], wrap: state.wrap, seed: (Math.random() * 1e6) | 0, to: '', msg: '', from: state.from, center: -1 };
+      state = { ids: [], wrap: state.wrap, seed: (Math.random() * 1e6) | 0, to: '', msg: '', from: state.from, center: -1, place: null };
       $('#to').value = ''; $('#msg').value = ''; $('#count').textContent = '0 / 600';
       save(); renderPlate(true); go(1);
     };
@@ -602,7 +640,7 @@
       mode = e.target.value;
       history.replaceState(null, '', `?note=${mode}${location.hash.replace(/[?&]note=\w+/, '')}`);
       resetNote(current); showGift(current, true);
-      gift3d.setScene(B3D.build(current.ids, current.wrap, current.seed, current.center, { card: hasCard(current) }), false); cardShown(true);
+      gift3d.setScene(B3D.build(current.ids, current.wrap, current.seed, current.center, { card: hasCard(current), place: current.place }), false); cardShown(true);
     };
     $('#g-hide').onclick = () => { setNote(false); $('#g-read').focus({ preventScroll: true }); };
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#gift').classList.contains('is-open')) $('#g-hide').click(); });

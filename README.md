@@ -11,8 +11,9 @@ stems and leaves in line glyphs, folded paper with a ribbon. Drag it to turn it.
 
 - **No server.** The flowers, the wrap, the arrangement and the note are packed into the link's
   `#` fragment, which browsers never send anywhere. Nothing is stored.
-- **Links** (`#g=`): a few bytes for the flowers, wrap, language and centre flower, then the
-  words, deflated when that's shorter. Old `#b=` links still open.
+- **Links** (`#g=`): a few bytes for the flowers, wrap, language and centre flower, then (if a
+  flower was moved by hand) two bytes a head for the arrangement, then the words, deflated when
+  that's shorter. Old `#b=` links still open.
 - **English and Arabic.** The recipient sees the page in the sender's language, and can switch.
 - **Opening the note** has six concepts to try, switched with the picker at the top of the gift page
   (or `?note=card|pull|rub|petals|lines|classic`): by default a little envelope is tucked into the

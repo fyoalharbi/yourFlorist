@@ -19,6 +19,7 @@
   const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
   const mul = (a, k) => [a[0] * k, a[1] * k, a[2] * k];
   const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+  const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
   const norm = (v) => { const l = Math.hypot(v[0], v[1], v[2]) || 1; return [v[0] / l, v[1] / l, v[2] / l]; };
   const TAU = Math.PI * 2;
 
@@ -56,14 +57,14 @@
   const L0 = norm([0.5, 0.9, 0.6]);                    // a fixed light, used to orient line normals at build time
 
   // ── The scene: a flat list of points ──
-  //   x y z  nx ny nz  colour glyph  tx ty tz (line tangent)  ao  sway phase  group
-  const STRIDE = 15, STEP = 0.0125;
+  //   x y z  nx ny nz  colour glyph  tx ty tz (line tangent)  ao  sway phase  group  flower
+  const STRIDE = 16, STEP = 0.0125;
   const LITE = matchMedia('(pointer: coarse), (max-width: 700px)').matches;   // phones: thin the cloud, fewer frames
   class Cloud {
     constructor() { this.d = []; this.groups = []; }
     add(p, n, col, ch, o = {}) {
       const t = o.t || [0, 0, 0];
-      this.d.push(p[0], p[1], p[2], n[0], n[1], n[2], CI[col], ch, t[0], t[1], t[2], o.ao ?? 1, o.sw ?? 0, o.ph ?? 0, o.g ?? -1);
+      this.d.push(p[0], p[1], p[2], n[0], n[1], n[2], CI[col], ch, t[0], t[1], t[2], o.ao ?? 1, o.sw ?? 0, o.ph ?? 0, o.g ?? -1, -1);
     }
   }
 
@@ -360,43 +361,88 @@
     dome(cl, frame(at(0, h - w * k, 0.004), F.d), 0.02, 0.008, 'red', 'red2', 'eye', { g: CARD });
   }
 
-  // ── A whole bouquet: heads on a dome, stems gathered at the ribbon, leaves round the rim ──
-  function build(ids, wrapIdx, seed, center = -1, opts = {}) {
-    const rnd = seeded('3d' + seed), cl = new Cloud(), Wp = WRAPS[wrapIdx] || WRAPS[0];
-    const n = ids.length;
-    if (!n) { wrapping(cl, Wp, seeded('wrap' + seed)); if (opts.card) card(cl, { h: 0.9, tan: 0.8 }, seeded('card' + seed)); return { cl, target: [0, 0.15, 0] }; }
+  // ── Where the heads sit on the dome, as directions from the tie. An arrangement travels as two numbers a head:
+  //    how far from the top (6 bits of the cap) and which way round (10 bits) ──
+  const CAPMAX = 0.8;                                  // no wider than a hand holds them
+  const onDome = (th, ph) => [Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)];
+  const angle = (a, b) => Math.acos(clamp(dot(a, b), -1, 1));
+  const quant = (v) => [Math.round((Math.min(CAPMAX, Math.acos(clamp(v[1], -1, 1))) / CAPMAX) * 63), ((Math.round((Math.atan2(v[2], v[0]) / TAU) * 1024) % 1024) + 1024) % 1024];
+  const unquant = ([tq, pq]) => onDome((tq / 63) * CAPMAX, (pq / 1024) * TAU);
+
+  // Where the heads go: big ones first on a spiral, settled so they don't overlap (or a saved arrangement)
+  //   opts.place: a saved arrangement (from .place of an earlier build); opts.pin: { i, v } one head held at v while the rest make room
+  function layout(ids, rnd, center, opts) {
     const items = ids.map((id) => ({ sp: SPECIES[id], k: rnd() })).sort((a, b) => (b.sp.size - a.sp.size) || (a.k - b.k));
     const main = items.filter((it) => !it.sp.filler), fill = items.filter((it) => it.sp.filler);
     const ci = main.findIndex((it) => it.sp === SPECIES[center]);
     if (ci > 0) main.unshift(main.splice(ci, 1)[0]);
-    const Fp = [0, 0, 0], UP = [0, 1, 0], rot = rnd() * TAU, CAPMAX = 0.8;   // stems fan out from the tie, no wider than a hand holds them
+    const UP = [0, 1, 0], rot = rnd() * TAU;
     let hk = 1.7 + (12 - Math.max(1, main.length)) * 0.055;   // fewer flowers: bigger heads, so the paper doesn't dominate
     const Rd = 0.98 + (hk - 1.7) * 0.3;                        // the dome the heads sit on: the stems' length from the tie
     // too many big heads for the dome? shrink them all a little (12 sunflowers still fit)
     const need = main.reduce((a, it) => a + Math.PI * ((it.sp.size * hk) / Rd) ** 2, 0), room = 0.82 * TAU * (1 - Math.cos(CAPMAX));
     if (need > room) hk *= Math.sqrt(room / need);
     const ang = (it) => (it.sp.size * hk * 0.95) / Rd;          // a head's footprint on the dome, as an angle
-    const angle = (a, b) => Math.acos(clamp(a[0] * b[0] + a[1] * b[1] + a[2] * b[2], -1, 1));
-    const onDome = (th, ph) => [Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)];
     // start: a golden-angle spiral from the top, big heads first
     const cap0 = main.length <= 1 ? 0 : Math.min(0.7, 0.18 + 0.05 * main.length);
     const P = main.map((it, i) => ({ it, v: main.length === 1 ? [0, 1, 0] : onDome(Math.acos(1 - (1 - Math.cos(cap0)) * ((i + 0.5) / main.length)), rot + i * 2.39996 + rnd() * 0.4) }));
-    // settle: heads that overlap push apart along the dome; a gentle pull keeps the dome compact
-    for (let iter = 0; iter < 60; iter++) {
-      for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
-        const a = P[i], b = P[j], want = (ang(a.it) + ang(b.it)) * 0.88, d = angle(a.v, b.v);   // 0.88: let petals tuck a little
-        if (d >= want) continue;
-        let t = sub(a.v, b.v);
-        if (Math.hypot(...t) < 1e-6) t = [rnd() - 0.5, 0, rnd() - 0.5];
-        const push = (want - d) * 0.5;
-        a.v = norm(add(a.v, mul(norm(t), push))); b.v = norm(sub(b.v, mul(norm(t), push)));
+    // settle: heads that overlap push apart along the dome; a gentle pull keeps the dome compact.
+    // A pinned head stays put and the others move all the way out of its way.
+    const relax = (iters, pin = -1, pull = true) => {
+      for (let iter = 0; iter < iters; iter++) {
+        for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+          const a = P[i], b = P[j], want = (ang(a.it) + ang(b.it)) * 0.88, d = angle(a.v, b.v);   // 0.88: let petals tuck a little
+          if (d >= want) continue;
+          let t = sub(a.v, b.v);
+          if (Math.hypot(...t) < 1e-6) t = [rnd() - 0.5, 0, rnd() - 0.5];
+          const push = (want - d) * 0.5, u = norm(t);
+          if (i !== pin) a.v = norm(add(a.v, mul(u, j === pin ? push * 2 : push)));
+          if (j !== pin) b.v = norm(sub(b.v, mul(u, i === pin ? push * 2 : push)));
+        }
+        for (const [i, q] of P.entries()) {
+          if (i === pin) continue;
+          if (pull) q.v = norm(add(q.v, mul(UP, 0.01)));
+          if (angle(q.v, UP) > CAPMAX) q.v = onDome(CAPMAX, Math.atan2(q.v[2], q.v[0]));
+        }
       }
-      for (const q of P) {
-        q.v = norm(add(q.v, mul(UP, 0.01)));
-        const th = angle(q.v, UP);
-        if (th > CAPMAX) q.v = onDome(CAPMAX, Math.atan2(q.v[2], q.v[0]));
-      }
+    };
+    const given = opts.place && opts.place.length === main.length;
+    if (given) P.forEach((q, i) => (q.v = unquant(opts.place[i])));
+    else relax(60);
+    if (opts.pin && P[opts.pin.i]) { P[opts.pin.i].v = opts.pin.v; relax(40, opts.pin.i, false); }
+    const place = P.map((q) => quant(q.v));
+    return { main, fill, P, hk, Rd, ang, rot, place };
+  }
+  // the arrangement alone: each head's direction and the arrangement to save, for a head that's being moved
+  function arrange(ids, seed, center = -1, opts = {}) {
+    const { P, place } = layout(ids, seeded('3d' + seed), center, opts);
+    return { vs: P.map((q) => q.v), place };
+  }
+  // a quick look at a move: each flower, head, stem and leaf, swings round the tie from where it was to where it's going
+  const turn = (a, b) => {
+    const k = cross(a, b), sn = Math.hypot(...k), cs = dot(a, b);
+    if (sn < 1e-5) return null;
+    const [x, y, z] = mul(k, 1 / sn), t = 1 - cs;
+    return [cs + x * x * t, x * y * t - z * sn, x * z * t + y * sn, y * x * t + z * sn, cs + y * y * t, y * z * t - x * sn, z * x * t - y * sn, z * y * t + x * sn, cs + z * z * t];
+  };
+  const by = (M, d, o) => { const x = d[o], y = d[o + 1], z = d[o + 2]; d[o] = M[0] * x + M[1] * y + M[2] * z; d[o + 1] = M[3] * x + M[4] * y + M[5] * z; d[o + 2] = M[6] * x + M[7] * y + M[8] * z; };
+  function shift(sc, from, to) {
+    const d = Float32Array.from(sc.cl.d), R = from.map((a, i) => (to[i] ? turn(a, to[i]) : null));
+    for (let o = 0; o < d.length; o += STRIDE) {
+      const M = R[d[o + 15]];
+      if (!M || d[o + 1] < 0.02) continue;          // below the tie the stems stay gathered
+      by(M, d, o); by(M, d, o + 3); by(M, d, o + 8);
     }
+    const groups = sc.cl.groups.map((c, i) => { if (!R[i]) return c; const g = c.slice(); by(R[i], g, 0); return g; });
+    return { ...sc, cl: { d, groups } };
+  }
+
+  // ── A whole bouquet: heads on a dome, stems gathered at the ribbon, leaves round the rim ──
+  function build(ids, wrapIdx, seed, center = -1, opts = {}) {
+    const rnd = seeded('3d' + seed), cl = new Cloud(), Wp = WRAPS[wrapIdx] || WRAPS[0];
+    const n = ids.length;
+    if (!n) { wrapping(cl, Wp, seeded('wrap' + seed)); if (opts.card) card(cl, { h: 0.9, tan: 0.8 }, seeded('card' + seed)); return { cl, target: [0, 0.15, 0] }; }
+    const { main, fill, P, hk, Rd, ang, rot, place } = layout(ids, rnd, center, opts), Fp = [0, 0, 0], UP = [0, 1, 0];
     // fillers go into the biggest gaps between the heads, a little behind them
     const cand = Array.from({ length: 240 }, (_, k) => onDome(Math.acos(1 - (1 - Math.cos(CAPMAX + 0.1)) * ((k + 0.5) / 240)), k * 2.39996 + rot));
     const placed = P.map((q) => ({ v: q.v, a: ang(q.it) }));
@@ -434,7 +480,7 @@
       leaf(cl, base, d, norm(cross(d, [0, 1, 0])), 0.16 + rnd() * 0.07, 0.04, k % 2 ? 'leaf' : 'leafD', { droop: 0.08, sw: 0.6, ph: k, g: GREEN, ao: 0.6 });
     }
     P.forEach(({ it, v: dv, c }, i) => {
-      const ph = Math.atan2(dv[2], dv[0]);
+      const own = cl.d.length, ph = Math.atan2(dv[2], dv[0]);
       const F = frame(c, add(dv, [0, 0.2, 0.45]), hk), o = { g: cl.groups.length, sw: 1, ph: i * 1.7 };
       cl.groups.push(c);
       // the stem: straight from the cut end to the ribbon, then a soft curve up to the head
@@ -449,8 +495,9 @@
         leaf(cl, p, d, side, 0.12, 0.03, 'leaf', { droop: 0.05, sw: t, ph: o.ph, g: GREEN, ao: 0.8 });
       }
       it.sp.build(cl, F, rnd, o, it.sp);
+      for (let q = own + 15; q < cl.d.length; q += STRIDE) cl.d[q] = i;
     });
-    return { cl, target: [0, 0.45, 0] };
+    return { cl, target: [0, 0.45, 0], vs: P.filter((q) => !q.filler).map((q) => q.v), place, heads: main.length, dome: { r: Rd, cap: CAPMAX } };
   }
   // One flower on its own, turned three-quarters toward the camera (the counter's thumbnails)
   function single(id) {
@@ -484,16 +531,32 @@
       setTimeout(() => { this.started = true; if (this.o.reveal && !REDUCED) this.grow = 0; requestAnimationFrame(loop); }, this.o.delay || 0);   // a still frame first, so the page's own intro plays smoothly
     }
     destroy() { this.dead = true; }
-    // is the card drawn at this point on the page (give or take a cell)?
-    hitCard(x, y) {
-      if (!this.COLS) return false;
-      const r = this.c.getBoundingClientRect(), ox = (this.W - this.COLS * this.cw) / 2, oy = (this.H - this.ROWS * this.chH) / 2;
-      const cx = Math.floor((x - r.left - ox) / this.cw), cy = Math.floor((y - r.top - oy) / this.chH);
-      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+    // a point on the page, in character cells
+    cellAt(x, y) {
+      const r = this.c.getBoundingClientRect();
+      return [(x - r.left - (this.W - this.COLS * this.cw) / 2) / this.cw, (y - r.top - (this.H - this.ROWS * this.chH) / 2) / this.chH];
+    }
+    // the group drawn at a point on the page, give or take a cell, that passes the test
+    groupAt(x, y, ok) {
+      if (!this.COLS) return null;
+      const [cx, cy] = this.cellAt(x, y).map(Math.floor);
+      for (const [dx, dy] of [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]]) {
         const X = cx + dx, Y = cy + dy, i = Y * this.COLS + X;
-        if (X >= 0 && Y >= 0 && X < this.COLS && Y < this.ROWS && this.zb[i] && this.cg[i] === CARD) return true;
+        if (X >= 0 && Y >= 0 && X < this.COLS && Y < this.ROWS && this.zb[i] && !this.gap[i] && ok(this.cg[i])) return this.cg[i];
       }
-      return false;
+      return null;
+    }
+    hitCard(x, y) { return this.groupAt(x, y, (g) => g === CARD) !== null; }
+    headAt(x, y) { const g = this.groupAt(x, y, (g) => g >= 0); return g === null ? -1 : g; }
+    // where a point on the page meets the dome of radius R round the tie, kept within the cap
+    domeAt(x, y, R, cap) {
+      const V = this.view;
+      if (!V) return null;
+      const [X, Y] = this.cellAt(x, y), a = (X - V.hc) / V.cwI, b = (V.hr - Y) / V.chI;
+      const d = norm(add(V.f, add(mul(V.r, a), mul(V.u, b)))), o = V.cam, B = dot(o, d), disc = B * B - (dot(o, o) - R * R);
+      const v = norm(add(o, mul(d, disc >= 0 ? -B - Math.sqrt(disc) : -B)));   // the near side, or the closest the ray comes
+      const th = Math.acos(clamp(v[1], -1, 1));
+      return th > cap ? onDome(cap, Math.atan2(v[2], v[0])) : v;
     }
     show(group, on) { this.skip = on ? null : group; this.dirty = true; }
     // recording: pause the live loop and draw chosen frames by hand, with the framing held still
@@ -507,7 +570,7 @@
       for (let i = 0; i < 160; i++) this.bits[(Math.random() * 8192) | 0] ^= 1;
       this.draw(this.t);
     }
-    setScene(sc, animate) {
+    setScene(sc, animate, keep) {
       let d = sc.cl.d;
       const cap = 46000;
       if (LITE && !this.o.thumb && d.length / STRIDE > cap) {          // keep an even, deterministic share; the pinhole pass covers the gaps
@@ -516,7 +579,9 @@
         d = out;
       }
       this.pts = Float32Array.from(d); this.n = d.length / STRIDE;
-      this.groups = Float32Array.from(sc.cl.groups.flat()); this.target = sc.target; this.hasFlowers = sc.cl.groups.length > 0;
+      this.groups = Float32Array.from(sc.cl.groups.flat()); this.hasFlowers = sc.cl.groups.length > 0;
+      if (keep) { this.dirty = true; this.draw(this.t); return; }   // a flower being moved: same camera, so nothing jumps
+      this.target = sc.target;
       // the bouquet's real extent: how far it reaches out from the axis, and from top to bottom
       let fit = 0, rx = 0, y0 = Infinity, y1 = -Infinity;
       for (let o = 0; o < this.pts.length; o += STRIDE) {
@@ -547,16 +612,28 @@
     bindInput() {
       const c = this.c;
       let drag = null;
-      c.addEventListener('pointerdown', (e) => { drag = { x: e.clientX, y: e.clientY }; c.setPointerCapture(e.pointerId); this.idle = 0; c.classList.add('is-drag'); });
+      const o = this.o;   // o.onGrab(head) → true to move that head; then o.onMove(head, x, y) and o.onDrop(head)
+      c.addEventListener('pointerdown', (e) => {
+        c.setPointerCapture(e.pointerId); this.idle = 0;
+        const g = o.onGrab ? this.headAt(e.clientX, e.clientY) : -1;
+        if (g >= 0 && o.onGrab(g)) { this.grab = g; c.classList.add('is-move'); return; }
+        drag = { x: e.clientX, y: e.clientY }; c.classList.add('is-drag');
+      });
+      // on a phone, a finger that lands on a flower moves it rather than scrolling the page
+      if (o.onGrab) c.addEventListener('touchstart', (e) => { const t = e.touches[0]; if (t && this.headAt(t.clientX, t.clientY) >= 0) e.preventDefault(); }, { passive: false });
       c.addEventListener('pointermove', (e) => {
-        if (!drag) return;
+        if (this.grab != null) { o.onMove(this.grab, e.clientX, e.clientY); this.idle = 0; return; }
+        if (!drag) { if (o.onGrab && e.pointerType === 'mouse') c.classList.toggle('is-over', this.headAt(e.clientX, e.clientY) >= 0); return; }
         this.yaw -= (e.clientX - drag.x) * 0.009;
         this.pitch = clamp(this.pitch + (e.clientY - drag.y) * 0.006, -0.15, 1.2);
         drag = { x: e.clientX, y: e.clientY }; this.idle = 0; this.dirty = true;
       });
-      const end = () => { drag = null; c.classList.remove('is-drag'); };
+      const end = () => {
+        if (this.grab != null) { o.onDrop(this.grab); this.grab = null; c.classList.remove('is-move'); }
+        drag = null; c.classList.remove('is-drag');
+      };
       c.addEventListener('pointerup', end); c.addEventListener('pointercancel', end);
-      this.dragging = () => !!drag;
+      this.dragging = () => !!drag || this.grab != null;
     }
     step(dt) {
       this.t += dt; this.idle += dt;
@@ -581,6 +658,7 @@
       const pan = this.pan || [0, 0], cwI = FOC / cw, chI = FOC / chH, hc = COLS / 2 + pan[0], hr = ROWS / 2 + pan[1], asp = chH / cw;
       const L = norm([-f[0] * 0.75 + u[0] * 0.55 + r[0] * 0.35, -f[1] * 0.75 + u[1] * 0.55 + r[1] * 0.35, -f[2] * 0.75 + u[2] * 0.55 + r[2] * 0.35]);   // from over the viewer's right shoulder
       const cg = this.cg;
+      this.view = { cam, f, r, u, hc, hr, cwI, chI };
       const P = this.pts, G = this.groups, bits = this.bits, anim = !REDUCED && !this.o.thumb;
       const gs = this.grow < 1 ? 1 - Math.pow(1 - this.grow, 3) : 1, gk = 0.35 + 0.65 * gs;
       const near = dist - fit;
@@ -683,5 +761,5 @@
     }
   }
 
-  window.B3D = { SPECIES, WRAPS, CARD, build, single, Renderer };
+  window.B3D = { SPECIES, WRAPS, CARD, build, arrange, shift, single, Renderer };
 })();
