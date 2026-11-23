@@ -22,7 +22,9 @@
       back1: '← Flowers', next2: 'Tie the ribbon →',
       s3tag: 'step 03 · delivery', s3h: 'Your bouquet is <em>ready</em>', s3lead: 'Send this link. The flowers and your note are packed into it.',
       linkAria: 'Bouquet link', copy: 'Copy link', copied: 'copied. now send it to them.', preview: 'Preview what they\'ll see ↗', back2: '← Edit note', again: 'Start a new bouquet',
-      drag: 'drag to turn', dragGift: 'drag the bouquet to turn it', read: 'Read the note ↑', readFrom: (f) => `Read ${f}'s note ↑`, hide: 'Hide the note ↓', save: 'Save as image', gif: 'Save as GIF', saving: 'Saving…', own: 'Send flowers of your own →',
+      drag: 'drag to turn', dragGift: 'drag the bouquet to turn it', read: 'Read the note ↑', readFrom: (f) => `Read ${f}'s note ↑`, hide: 'Hide the note ↓', save: 'Save as image', gif: 'Save as GIF',
+      pull: 'Pull the card up ↑', rub: 'Rub the note to read it', petals: 'Tap the flowers to let the words fall', more: (i, n) => `Tap for more ↓  ${i} / ${n}`, all: 'show it all',
+      concept: 'note concept', modes: ['Pull up', 'Rub', 'Petals', 'Line by line', 'Classic'], saving: 'Saving…', own: 'Send flowers of your own →',
       add: (n) => `Add a ${n}`, rm: (n) => `Remove a ${n}`,
       tally: (n) => (n ? `${n} stem${n > 1 ? 's' : ''}${n >= MAX ? ' · full' : ''}` : 'an empty wrap'),
       paper: (w) => `${w.toLowerCase()} paper`,
@@ -40,7 +42,9 @@
       back1: '→ الورد', next2: 'اربط الشريطة ←',
       s3tag: 'الخطوة ٣ · التوصيل', s3h: 'باقتك <em>جاهزة</em>', s3lead: 'أرسل هذا الرابط؛ ففيه الورد وبطاقتك.',
       linkAria: 'رابط الباقة', copy: 'انسخ الرابط', copied: 'نُسخ الرابط. أرسله الآن.', preview: 'شاهد ما سيرونه ↗', back2: '→ عدّل البطاقة', again: 'باقة جديدة',
-      drag: 'اسحب للتدوير', dragGift: 'اسحب الباقة لتدويرها', read: 'اقرأ البطاقة ↑', readFrom: (f) => `اقرأ بطاقة ${f} ↑`, hide: 'أخفِ البطاقة ↓', save: 'احفظها صورة', gif: 'احفظها GIF متحركة', saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
+      drag: 'اسحب للتدوير', dragGift: 'اسحب الباقة لتدويرها', read: 'اقرأ البطاقة ↑', readFrom: (f) => `اقرأ بطاقة ${f} ↑`, hide: 'أخفِ البطاقة ↓', save: 'احفظها صورة', gif: 'احفظها GIF متحركة',
+      pull: 'اسحب البطاقة للأعلى ↑', rub: 'امسح على البطاقة لتقرأها', petals: 'اضغط على الورد لتتساقط الكلمات', more: (i, n) => `اضغط للمزيد ↓  ${i} / ${n}`, all: 'أظهرها كلها',
+      concept: 'طريقة فتح البطاقة', modes: ['السحب', 'المسح', 'البتلات', 'سطرًا سطرًا', 'الأصلية'], saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
       add: (n) => `أضف ${n}`, rm: (n) => `احذف ${n}`,
       tally: (n) => (n ? `الأغصان: ${n}${n >= MAX ? ' · ممتلئة' : ''}` : 'غلاف فارغ'),
       paper: (w) => `ورق ${w}`,
@@ -72,21 +76,39 @@
     if (current) showGift(current, true);
   }
 
-  // ── KIT.decode: 0/1 noise resolving into letters ──
-  function decode(el, text, o = {}) {
-    cancelAnimationFrame(el._raf || 0);
-    const chars = [...text], n = chars.length, at = chars.map((_, i) => (i / n) * 0.7 + Math.random() * 0.12);
-    const t0 = performance.now() + (o.delay || 0), dur = REDUCED ? 0 : o.dur || Math.min(2400, 500 + n * 12);
-    const frame = (now) => {
-      const k = now < t0 ? 0 : dur ? (now - t0) / dur : 2; let out = '', done = true;
-      for (let i = 0; i < n; i++) {
-        if (/\s/.test(chars[i]) || k >= at[i] + 0.18) out += chars[i];
-        else { out += Math.random() < 0.5 ? '0' : '1'; done = false; }
-      }
-      el.textContent = out;
-      if (!done) el._raf = requestAnimationFrame(frame);
+  // ── The note as one span per character, each either 0/1 noise or itself, so it can be revealed in any order ──
+  function letters(el, text) {
+    el.textContent = '';
+    const cells = [...text].map((ch) => {
+      const s = document.createElement('span'), on = /\s/.test(ch);
+      s.textContent = on ? ch : '0'; el.appendChild(s);
+      return { s, ch, on };
+    });
+    const at = cells.map((_, i) => (i / cells.length) * 0.82 + Math.random() * 0.18);   // when each letter resolves in a sweep
+    const total = cells.filter((c) => !c.on).length;
+    let raf = 0, last = 0;
+    const L = {
+      cells, k: 0, over: false,
+      show(i) { const c = cells[i]; if (c && !c.on) { c.on = true; c.s.textContent = c.ch; c.s.classList.add('is-on'); } },
+      upto(k) { L.k = Math.max(L.k, k); for (let i = 0; i < cells.length; i++) if (at[i] <= L.k) L.show(i); },
+      share: () => 1 - cells.filter((c) => !c.on).length / (total || 1),   // how much is readable
+      end() { L.over = true; cancelAnimationFrame(raf); el.textContent = text; },   // plain text again, so Arabic joins up
     };
-    el._raf = requestAnimationFrame(frame);
+    const tick = (now) => {
+      if (L.over) return;
+      raf = requestAnimationFrame(tick);
+      if (now - last < 50) return;
+      last = now;
+      for (const c of cells) if (!c.on && Math.random() < 0.35) c.s.textContent = Math.random() < 0.5 ? '0' : '1';
+    };
+    if (!REDUCED) raf = requestAnimationFrame(tick);
+    return L;
+  }
+  // resolve whatever is left, from where it got to
+  function sweep(L, dur, then) {
+    const k0 = L.k, t0 = performance.now();
+    const f = (now) => { const q = REDUCED ? 1 : Math.min(1, (now - t0) / dur); L.upto(k0 + (1.01 - k0) * q); if (q < 1) requestAnimationFrame(f); else then(); };
+    requestAnimationFrame(f);
   }
 
   // ════ The link ════
@@ -156,28 +178,203 @@
     $('#g-from').textContent = b.from ? '— ' + b.from : '';
     $('#g-list').textContent = listOf(b.ids, b.wrap);
     $('#g-art').setAttribute('aria-label', t('bouquetAria', listOf(b.ids, b.wrap)));
-    $('#g-read').textContent = b.from ? t('readFrom', b.from) : t('read');
+    $('#g-read-l').textContent = mode === 'pull' ? t('pull') : b.from ? t('readFrom', b.from) : t('read');
+    $('#g-mode').innerHTML = MODES.map((m, i) => `<option value="${m}"${m === mode ? ' selected' : ''}>${i + 1} · ${t('modes')[i]}</option>`).join('');
+    hint();
     if (relabel) return;                      // a language switch: the words change, the bouquet and note stay put
-    const msg = $('#g-msg');
     $('#g-msg-sr').textContent = b.msg;
-    msg.textContent = b.msg.replace(/\S/g, '0');   // noise until the veil opens
     $('#g-card').hidden = !b.msg && !b.from;
-    msg.dataset.read = '';
-    setNote(false);
+    resetNote(b);
     // reveal: the bouquet grows in once the page's own intro has played
     gift3d = gift3d || new B3D.Renderer($('#g-art'), { yaw: 0.4, delay: 700, reveal: true });
     gift3d.setScene(B3D.build(b.ids, b.wrap, b.seed, b.center), true);
   }
 
-  // ── The note: hidden behind "Read the note"; opening slides the veil up over the bouquet and decodes it ──
+  // ════ The note: five ways to open it. A concept picker on the gift page switches between them (?note=…) ════
+  //   pull     drag the sealed card up; the veil follows your finger and the words resolve as it rises
+  //   rub      the note stays as flickering bits until you rub over it
+  //   petals   tap the flowers and petals fall into place as the letters
+  //   lines    a sentence at a time, a tap for each
+  //   classic  the veil slides up and the whole note decodes by itself
+  // Every way ends the same: "— name" writes itself, a soft chime, a buzz on phones.
+  // With reduced motion the note is simply there; screen readers always get the words straight away.
+  const MODES = ['pull', 'rub', 'petals', 'lines', 'classic'];
+  let mode = new URLSearchParams(location.search).get('note');
+  if (!MODES.includes(mode)) mode = 'pull';
+  let note = null;
+
+  function resetNote(b) {
+    if (note && note.L) note.L.end();
+    const msg = $('#g-msg');
+    $('#gift').dataset.note = mode;
+    $('#g-card').classList.remove('is-read');
+    note = { L: b.msg ? letters(msg, b.msg) : null, done: false, started: false, part: 0, parts: 1 };
+    if (!b.msg) msg.textContent = '';
+    if (mode === 'lines' && note.L) {
+      // a new part starts at the first letter after . ! ? or a line break
+      let n = 0, brk = false;
+      for (const c of note.L.cells) { if (brk && !/\s/.test(c.ch)) { n++; brk = false; } c.part = n; if (/[.!?؟…\n]/.test(c.ch)) brk = true; c.s.classList.toggle('is-later', n > 0); }
+      note.parts = n + 1;
+    }
+    hint();
+    setNote(false);
+  }
+
   function setNote(open) {
-    const gift = $('#gift'), veil = $('#g-veil'), msg = $('#g-msg');
+    const gift = $('#gift'), veil = $('#g-veil');
     gift.classList.toggle('is-open', open);
     veil.inert = !open;
     $('#g-read').setAttribute('aria-expanded', open);
+    lean(open);
     if (!open) return;
-    if (current && current.msg && !msg.dataset.read) { msg.dataset.read = '1'; setTimeout(() => decode(msg, current.msg), REDUCED ? 0 : 450); }
+    wake();
+    if (note && !note.started) { note.started = true; setTimeout(begin, REDUCED ? 0 : 450); }
     setTimeout(() => $('#g-card').focus({ preventScroll: true }), REDUCED ? 0 : 500);
+  }
+  function begin() {
+    const L = note.L;
+    if (!L || REDUCED) { if (L) L.upto(1.01); return finish(); }
+    if (mode === 'pull' || mode === 'classic') sweep(L, Math.min(2400, 500 + L.cells.length * 12) * (1 - L.k), finish);
+    else if (mode === 'lines') nextLine();
+    hint();   // rub and petals wait for the reader
+  }
+  function finish() {
+    if (!note || note.done) return;
+    note.done = true;
+    if (note.L) note.L.end();
+    $('#g-card').classList.add('is-read');
+    hint(); chime();
+  }
+  function revealAll() {
+    if (!note || note.done) return;
+    if (note.L) note.L.cells.forEach((c, i) => { c.s.classList.remove('is-later'); note.L.show(i); });
+    finish();
+  }
+  function hint() {
+    let s = '';
+    if (current && current.msg && note && note.started && !note.done) s = mode === 'rub' ? t('rub') : mode === 'petals' ? t('petals') : mode === 'lines' ? t('more', note.part, note.parts) : '';
+    $('#g-hint-t').textContent = s;
+    $('#g-hint').hidden = !s;
+  }
+
+  // pull: the card follows the finger up, and lets go past a third of the way
+  function bindPull() {
+    const btn = $('#g-read'), veil = $('#g-veil');
+    let d = null;
+    btn.addEventListener('pointerdown', (e) => {
+      if (mode !== 'pull' || $('#gift').classList.contains('is-open')) return;
+      d = { y: e.clientY, k: 0, moved: false }; btn.setPointerCapture(e.pointerId);
+    });
+    btn.addEventListener('pointermove', (e) => {
+      if (!d) return;
+      const dy = d.y - e.clientY;
+      if (!d.moved && Math.abs(dy) < 6) return;
+      d.moved = true;
+      const k = (d.k = clamp(dy / (innerHeight * 0.4), 0, 1));
+      veil.style.transition = 'none'; veil.style.visibility = 'visible'; veil.style.transform = `translateY(${(1 - k) * 105}%)`;
+      btn.style.transform = `translateY(${-Math.max(0, dy) * 0.6}px)`;
+      if (note && note.L) note.L.upto(k * 0.8);
+    });
+    const up = () => {
+      if (!d) return;
+      const { k, moved } = d;
+      d = null;
+      if (!moved) return;   // a plain tap opens it like a button
+      btn.dataset.pulled = '1';
+      veil.style.transition = ''; btn.style.transform = '';
+      void veil.offsetWidth;
+      veil.style.transform = ''; veil.style.visibility = '';
+      if (k > 0.33) setNote(true);
+    };
+    btn.addEventListener('pointerup', up); btn.addEventListener('pointercancel', up);
+  }
+
+  // rub: letters under the finger (or the mouse) resolve; most of the way there, the rest follow
+  function rub(e) {
+    if (mode !== 'rub' || !note || !note.L || note.done || !note.started) return;
+    const L = note.L;
+    L.cells.forEach((c, i) => {
+      if (c.on) return;
+      const r = c.s.getBoundingClientRect();
+      if (Math.hypot(r.x + r.width / 2 - e.clientX, r.y + r.height / 2 - e.clientY) < 36) L.show(i);
+    });
+    if (L.share() > 0.88) { L.upto(1.01); finish(); }
+  }
+
+  // petals: each tap lets the next few words fall from where you tapped
+  const PETAL = ['0', '1', '@', '*', '·', '1', '0'];
+  function fall(x, y) {
+    if (mode !== 'petals' || !note || !note.L || note.done || !note.started) return;
+    const L = note.L, todo = [];
+    L.cells.forEach((c, i) => { if (!c.on && !c.falling) todo.push(i); });
+    const want = Math.max(10, Math.ceil(todo.length / 5));
+    let n = Math.min(want, todo.length);
+    while (n < todo.length && todo[n] === todo[n - 1] + 1) n++;   // finish the word
+    todo.slice(0, n).forEach((i, j) => {
+      const c = L.cells[i], r = c.s.getBoundingClientRect(), f = document.createElement('span');
+      c.falling = true;
+      f.className = 'petal'; f.textContent = PETAL[(Math.random() * PETAL.length) | 0]; f.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(f);
+      const sx = x + (Math.random() - 0.5) * 70, sy = y + (Math.random() - 0.5) * 40, drift = (Math.random() - 0.5) * 180;
+      const a = f.animate([
+        { transform: `translate(${sx}px, ${sy}px) rotate(0deg)`, opacity: 0 },
+        { opacity: 1, offset: 0.08 },
+        { transform: `translate(${(sx + r.x) / 2 + drift}px, ${(sy + r.y) / 2}px) rotate(${(Math.random() - 0.5) * 540}deg)`, offset: 0.55 },
+        { transform: `translate(${r.x}px, ${r.y}px) rotate(0deg)`, opacity: 1 },
+      ], { duration: 1000 + Math.random() * 800, delay: j * 22, easing: 'cubic-bezier(.35, .05, .35, 1)', fill: 'both' });
+      a.onfinish = () => { f.remove(); c.falling = false; L.show(i); if (L.share() >= 1) finish(); };
+    });
+  }
+
+  // lines: the next sentence decodes; the last one ends it
+  function nextLine() {
+    if (mode !== 'lines' || !note || !note.L || note.done || note.part >= note.parts) return;
+    const L = note.L, n = note.part++, mine = [];
+    L.cells.forEach((c, i) => { if (c.part === n) { mine.push(i); c.s.classList.remove('is-later'); } });
+    hint();
+    const t0 = performance.now(), dur = Math.min(1400, 300 + mine.length * 14);
+    const f = (now) => {
+      const q = Math.min(1, (now - t0) / dur);
+      mine.forEach((i, j) => { if (j / mine.length <= q) L.show(i); });
+      if (q < 1) requestAnimationFrame(f); else if (note.part >= note.parts) finish();
+    };
+    requestAnimationFrame(f);
+  }
+
+  // a tap is a press that didn't move (so dragging the bouquet still turns it)
+  function onTap(el, fn) {
+    let d = null;
+    el.addEventListener('pointerdown', (e) => (d = [e.clientX, e.clientY]));
+    el.addEventListener('pointerup', (e) => { if (d && Math.hypot(e.clientX - d[0], e.clientY - d[1]) < 8) fn(e); d = null; });
+  }
+
+  // the bouquet leans in toward the note while it's open
+  let leanBase = null, leanRaf = 0;
+  function lean(open) {
+    const r = gift3d;
+    if (!r || REDUCED) return;
+    if (leanBase === null) leanBase = r.pitch;
+    cancelAnimationFrame(leanRaf);
+    const p0 = r.pitch, p1 = open ? Math.min(1.15, leanBase + 0.32) : leanBase, t0 = performance.now();
+    const f = (now) => { const q = Math.min(1, (now - t0) / 900), e = 1 - Math.pow(1 - q, 3); r.pitch = p0 + (p1 - p0) * e; if (q < 1) leanRaf = requestAnimationFrame(f); };
+    leanRaf = requestAnimationFrame(f);
+    if (!open) leanBase = null;
+  }
+
+  // a soft three-note chime and a little buzz when the note is all there
+  let audio = null;
+  const wake = () => { try { audio = audio || new AudioContext(); audio.resume(); } catch {} };
+  function chime() {
+    if (REDUCED) return;
+    try { navigator.vibrate && navigator.vibrate([16, 70, 16]); } catch {}
+    if (!audio) return;
+    const now = audio.currentTime;
+    [[1046.5, 0], [1568, 0.09], [2093, 0.2]].forEach(([hz, d]) => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.type = 'sine'; o.frequency.value = hz;
+      g.gain.setValueAtTime(0, now + d); g.gain.linearRampToValueAtTime(0.04, now + d + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, now + d + 1.4);
+      o.connect(g).connect(audio.destination); o.start(now + d); o.stop(now + d + 1.5);
+    });
   }
 
   // ── Saving: the bouquet with the name and the note, in a portrait card, as a still or a turning GIF ──
@@ -384,7 +581,17 @@
     };
     $('#save').onclick = saveImage;
     $('#gif').onclick = saveGif;
-    $('#g-read').onclick = () => setNote(true);
+    $('#g-read').onclick = () => { const b = $('#g-read'); if (b.dataset.pulled) { delete b.dataset.pulled; return; } setNote(true); };
+    bindPull();
+    $('#g-msg').addEventListener('pointermove', rub); $('#g-msg').addEventListener('pointerdown', rub);
+    onTap($('#g-art'), (e) => fall(e.clientX, e.clientY));
+    onTap($('#g-veil'), (e) => { if (e.target.closest('button, a, select')) return; fall(e.clientX, e.clientY); nextLine(); });
+    $('#g-all').onclick = revealAll;
+    $('#g-mode').onchange = (e) => {
+      mode = e.target.value;
+      history.replaceState(null, '', `?note=${mode}${location.hash}`);
+      resetNote(current); showGift(current, true);
+    };
     $('#g-hide').onclick = () => { setNote(false); $('#g-read').focus({ preventScroll: true }); };
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#gift').classList.contains('is-open')) $('#g-hide').click(); });
     $('#lang').onclick = () => applyLang(lang === 'ar' ? 'en' : 'ar');
