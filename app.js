@@ -182,7 +182,6 @@
     $('#g-k').textContent = b.from ? t('deliveryFrom', b.from) : t('delivery');
     $('#g-to').innerHTML = b.to ? t('forName', b.to) : t('forYou');
     $('#g-from').textContent = b.from ? '— ' + b.from : '';
-    $('#g-list').textContent = listOf(b.ids, b.wrap);
     $('#g-art').setAttribute('aria-label', t('bouquetAria', listOf(b.ids, b.wrap)));
     $('#g-read').textContent = hasCard(b) ? t('readHere') : t('read');
     $('#g-bar-hint').textContent = hasCard(b) ? t('cardHint') : t('dragGift');

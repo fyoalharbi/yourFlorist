@@ -145,7 +145,6 @@ html[dir='rtl'] .g-card.is-read .g-from { animation-name: sign-rtl; }
 #g-bar-hint { color: var(--ink-2); }
 .g-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 20px; margin-top: 22px; padding-top: 16px;
   background: repeating-linear-gradient(90deg, #ffffff22 0 1px, transparent 1px 12px) top left / 100% 5px no-repeat; }
-.g-list { margin: 0; flex: 1 1 100%; font: 12px/1.6 var(--mono); color: #6f9f6fcc; }
 
 @media (max-width: 900px) {
   .top { padding: 14px 16px 22px; gap: 18px; }
