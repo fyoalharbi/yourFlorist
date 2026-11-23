@@ -24,7 +24,7 @@
       linkAria: 'Bouquet link', copy: 'Copy link', copied: 'copied. now send it to them.', preview: 'Preview what they\'ll see ↗', back2: '← Edit note', again: 'Start a new bouquet',
       drag: 'drag to turn', dragGift: 'drag the bouquet to turn it', read: 'Read the note ↑', readFrom: (f) => `Read ${f}'s note ↑`, hide: 'Hide the note ↓', save: 'Save as image', gif: 'Save as GIF',
       pull: 'Pull the card up ↑', rub: 'Rub the note to read it', petals: 'Tap the flowers to let the words fall', more: (i, n) => `Tap for more ↓  ${i} / ${n}`, all: 'show it all',
-      concept: 'note concept', modes: ['Pull up', 'Rub', 'Petals', 'Line by line', 'Classic'], saving: 'Saving…', own: 'Send flowers of your own →',
+      concept: 'note concept', cardHint: 'tap the little card in the flowers', readHere: 'or read it here ↑', modes: ['The card', 'Pull up', 'Rub', 'Petals', 'Line by line', 'Classic'], saving: 'Saving…', own: 'Send flowers of your own →',
       add: (n) => `Add a ${n}`, rm: (n) => `Remove a ${n}`,
       tally: (n) => (n ? `${n} stem${n > 1 ? 's' : ''}${n >= MAX ? ' · full' : ''}` : 'an empty wrap'),
       paper: (w) => `${w.toLowerCase()} paper`,
@@ -44,7 +44,7 @@
       linkAria: 'رابط الباقة', copy: 'انسخ الرابط', copied: 'نُسخ الرابط. أرسله الآن.', preview: 'شاهد ما سيرونه ↗', back2: '→ عدّل البطاقة', again: 'باقة جديدة',
       drag: 'اسحب للتدوير', dragGift: 'اسحب الباقة لتدويرها', read: 'اقرأ البطاقة ↑', readFrom: (f) => `اقرأ بطاقة ${f} ↑`, hide: 'أخفِ البطاقة ↓', save: 'احفظها صورة', gif: 'احفظها GIF متحركة',
       pull: 'اسحب البطاقة للأعلى ↑', rub: 'امسح على البطاقة لتقرأها', petals: 'اضغط على الورد لتتساقط الكلمات', more: (i, n) => `اضغط للمزيد ↓  ${i} / ${n}`, all: 'أظهرها كلها',
-      concept: 'طريقة فتح البطاقة', modes: ['السحب', 'المسح', 'البتلات', 'سطرًا سطرًا', 'الأصلية'], saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
+      concept: 'طريقة فتح البطاقة', cardHint: 'اضغط على البطاقة الصغيرة بين الورد', readHere: 'أو اقرأها هنا ↑', modes: ['البطاقة في الباقة', 'السحب', 'المسح', 'البتلات', 'سطرًا سطرًا', 'الأصلية'], saving: 'جارٍ الحفظ…', own: 'أرسل ورودك أنت ←',
       add: (n) => `أضف ${n}`, rm: (n) => `احذف ${n}`,
       tally: (n) => (n ? `الأغصان: ${n}${n >= MAX ? ' · ممتلئة' : ''}` : 'غلاف فارغ'),
       paper: (w) => `ورق ${w}`,
@@ -178,7 +178,8 @@
     $('#g-from').textContent = b.from ? '— ' + b.from : '';
     $('#g-list').textContent = listOf(b.ids, b.wrap);
     $('#g-art').setAttribute('aria-label', t('bouquetAria', listOf(b.ids, b.wrap)));
-    $('#g-read-l').textContent = mode === 'pull' ? t('pull') : b.from ? t('readFrom', b.from) : t('read');
+    $('#g-read-l').textContent = mode === 'pull' ? t('pull') : mode === 'card' && hasCard(b) ? t('readHere') : b.from ? t('readFrom', b.from) : t('read');
+    $('#g-bar-hint').textContent = mode === 'card' && hasCard(b) ? t('cardHint') : t('dragGift');
     $('#g-mode').innerHTML = MODES.map((m, i) => `<option value="${m}"${m === mode ? ' selected' : ''}>${i + 1} · ${t('modes')[i]}</option>`).join('');
     hint();
     if (relabel) return;                      // a language switch: the words change, the bouquet and note stay put
@@ -187,10 +188,12 @@
     resetNote(b);
     // reveal: the bouquet grows in once the page's own intro has played
     gift3d = gift3d || new B3D.Renderer($('#g-art'), { yaw: 0.4, delay: 700, reveal: true });
-    gift3d.setScene(B3D.build(b.ids, b.wrap, b.seed, b.center), true);
+    gift3d.setScene(B3D.build(b.ids, b.wrap, b.seed, b.center, { card: hasCard(b) }), true);
+    cardShown(true);
   }
 
   // ════ The note: five ways to open it. A concept picker on the gift page switches between them (?note=…) ════
+  //   card     a little envelope tucked into the bouquet; tap it and it's taken out and opened
   //   pull     drag the sealed card up; the veil follows your finger and the words resolve as it rises
   //   rub      the note stays as flickering bits until you rub over it
   //   petals   tap the flowers and petals fall into place as the letters
@@ -198,10 +201,13 @@
   //   classic  the veil slides up and the whole note decodes by itself
   // Every way ends the same: "— name" writes itself, a soft chime, a buzz on phones.
   // With reduced motion the note is simply there; screen readers always get the words straight away.
-  const MODES = ['pull', 'rub', 'petals', 'lines', 'classic'];
+  const MODES = ['card', 'pull', 'rub', 'petals', 'lines', 'classic'];
   let mode = new URLSearchParams(location.search).get('note');
-  if (!MODES.includes(mode)) mode = 'pull';
+  if (!MODES.includes(mode)) mode = 'card';
   let note = null;
+  const hasCard = (b) => mode === 'card' && !!(b.msg || b.from);
+  // the card sits in the bouquet until the note is open, breathing gently so it gets noticed
+  function cardShown(on) { if (gift3d) { gift3d.show(B3D.CARD, on); gift3d.glow = on; } }
 
   function resetNote(b) {
     if (note && note.L) note.L.end();
@@ -226,6 +232,7 @@
     veil.inert = !open;
     $('#g-read').setAttribute('aria-expanded', open);
     lean(open);
+    if (mode === 'card') cardShown(!open);
     if (!open) return;
     wake();
     if (note && !note.started) { note.started = true; setTimeout(begin, REDUCED ? 0 : 450); }
@@ -234,7 +241,7 @@
   function begin() {
     const L = note.L;
     if (!L || REDUCED) { if (L) L.upto(1.01); return finish(); }
-    if (mode === 'pull' || mode === 'classic') sweep(L, Math.min(2400, 500 + L.cells.length * 12) * (1 - L.k), finish);
+    if (mode === 'card' || mode === 'pull' || mode === 'classic') sweep(L, Math.min(2400, 500 + L.cells.length * 12) * (1 - L.k), finish);
     else if (mode === 'lines') nextLine();
     hint();   // rub and petals wait for the reader
   }
@@ -584,13 +591,18 @@
     $('#g-read').onclick = () => { const b = $('#g-read'); if (b.dataset.pulled) { delete b.dataset.pulled; return; } setNote(true); };
     bindPull();
     $('#g-msg').addEventListener('pointermove', rub); $('#g-msg').addEventListener('pointerdown', rub);
-    onTap($('#g-art'), (e) => fall(e.clientX, e.clientY));
+    onTap($('#g-art'), (e) => {
+      if (mode === 'card' && current && hasCard(current) && !$('#gift').classList.contains('is-open') && gift3d.hitCard(e.clientX, e.clientY)) return setNote(true);
+      fall(e.clientX, e.clientY);
+    });
+    $('#g-art').addEventListener('pointermove', (e) => { if (gift3d && !e.buttons) $('#g-art').style.cursor = mode === 'card' && gift3d.hitCard(e.clientX, e.clientY) ? 'pointer' : ''; });
     onTap($('#g-veil'), (e) => { if (e.target.closest('button, a, select')) return; fall(e.clientX, e.clientY); nextLine(); });
     $('#g-all').onclick = revealAll;
     $('#g-mode').onchange = (e) => {
       mode = e.target.value;
       history.replaceState(null, '', `?note=${mode}${location.hash.replace(/[?&]note=\w+/, '')}`);
       resetNote(current); showGift(current, true);
+      gift3d.setScene(B3D.build(current.ids, current.wrap, current.seed, current.center, { card: hasCard(current) }), false); cardShown(true);
     };
     $('#g-hide').onclick = () => { setNote(false); $('#g-read').focus({ preventScroll: true }); };
     addEventListener('keydown', (e) => { if (e.key === 'Escape' && $('#gift').classList.contains('is-open')) $('#g-hide').click(); });

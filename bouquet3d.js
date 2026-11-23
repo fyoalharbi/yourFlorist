@@ -338,11 +338,33 @@
     dome(cl, frame(Pb, Z), 0.02, 0.016, Wp.ribbon, Wp.ribbon, 'eye', { g: -14 });
   }
 
+  // ── The card: a little envelope on a clear pick, tucked in at the front, as florists do with the note ──
+  const CARD = -20;
+  function card(cl, fit, rnd) {
+    const side = rnd() < 0.5 ? -1 : 1, th = FRONT + side * 0.38, rr = R0 + fit.h * fit.tan + 0.12;
+    const c = [Math.cos(th) * rr, fit.h + 0.04, Math.sin(th) * rr];
+    const F = frame(c, [Math.cos(th) * 0.6, 0.35, Math.sin(th) * 0.6 + 0.5]);
+    const tilt = side * 0.16, w = 0.17, h = 0.115, k = (h * 1.1) / w;
+    const at = (u, v, z = 0) => loc(F, u * Math.cos(tilt) - v * Math.sin(tilt), u * Math.sin(tilt) + v * Math.cos(tilt), z);
+    // the pick, from deep in the paper up behind the card
+    const foot = [Math.cos(th) * 0.06, fit.h * 0.4, Math.sin(th) * 0.06], tip = at(0, 0, -0.012);
+    curve(cl, (t) => add(mul(foot, 1 - t), mul(tip, t)), Math.hypot(...sub(tip, foot)), 'linen', { g: CARD, ao: 0.6 });
+    // the envelope: its face, the edge, the flap's V from the top corners, and a seal
+    surface((t, s) => at(s * w, (t - 0.5) * 2 * h), Math.ceil((2 * h) / STEP), Math.ceil((2 * w) / STEP), (t, s, p, n) => {
+      const u = s * w, v = (t - 0.5) * 2 * h, sg = u < 0 ? -1 : 1, o = { g: CARD };
+      if (Math.abs(s) > 0.94) cl.add(p, n, 'kraft2', LINE, { ...o, t: norm(sub(at(u, v + 0.01), at(u, v - 0.01))) });
+      else if (t < 0.06 || t > 0.94) cl.add(p, n, 'kraft2', LINE, { ...o, t: norm(sub(at(u + 0.01, v), at(u - 0.01, v))) });
+      else if (Math.abs(v - (h - (w - Math.abs(u)) * k)) < 0.01) cl.add(p, n, 'red2', LINE, { ...o, t: norm(sub(at(u + 0.005, v + sg * 0.005 * k), at(u - 0.005, v - sg * 0.005 * k))) });
+      else cl.add(p, n, 'cream', RAMP, { ...o, ao: 0.95 });
+    }, F.d);
+    dome(cl, frame(at(0, h - w * k, 0.004), F.d), 0.02, 0.008, 'red', 'red2', 'eye', { g: CARD });
+  }
+
   // ── A whole bouquet: heads on a dome, stems gathered at the ribbon, leaves round the rim ──
-  function build(ids, wrapIdx, seed, center = -1) {
+  function build(ids, wrapIdx, seed, center = -1, opts = {}) {
     const rnd = seeded('3d' + seed), cl = new Cloud(), Wp = WRAPS[wrapIdx] || WRAPS[0];
     const n = ids.length;
-    if (!n) { wrapping(cl, Wp, seeded('wrap' + seed)); return { cl, target: [0, 0.15, 0] }; }
+    if (!n) { wrapping(cl, Wp, seeded('wrap' + seed)); if (opts.card) card(cl, { h: 0.9, tan: 0.8 }, seeded('card' + seed)); return { cl, target: [0, 0.15, 0] }; }
     const items = ids.map((id) => ({ sp: SPECIES[id], k: rnd() })).sort((a, b) => (b.sp.size - a.sp.size) || (a.k - b.k));
     const main = items.filter((it) => !it.sp.filler), fill = items.filter((it) => it.sp.filler);
     const ci = main.findIndex((it) => it.sp === SPECIES[center]);
@@ -403,6 +425,7 @@
     }
     const fit = { h: clamp(top * 0.8, 0.45, 1.5), tan: Math.min(tan, 1.3) };
     wrapping(cl, Wp, seeded('wrap' + seed), fit);
+    if (opts.card) card(cl, fit, seeded('card' + seed));
     const m = 3 + Math.ceil(n / 3);
     // greenery round the mouth of the paper, behind the heads
     for (let k = 0; k < m; k++) {
@@ -461,6 +484,18 @@
       setTimeout(() => { this.started = true; if (this.o.reveal && !REDUCED) this.grow = 0; requestAnimationFrame(loop); }, this.o.delay || 0);   // a still frame first, so the page's own intro plays smoothly
     }
     destroy() { this.dead = true; }
+    // is the card drawn at this point on the page (give or take a cell)?
+    hitCard(x, y) {
+      if (!this.COLS) return false;
+      const r = this.c.getBoundingClientRect(), ox = (this.W - this.COLS * this.cw) / 2, oy = (this.H - this.ROWS * this.chH) / 2;
+      const cx = Math.floor((x - r.left - ox) / this.cw), cy = Math.floor((y - r.top - oy) / this.chH);
+      for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+        const X = cx + dx, Y = cy + dy, i = Y * this.COLS + X;
+        if (X >= 0 && Y >= 0 && X < this.COLS && Y < this.ROWS && this.zb[i] && this.cg[i] === CARD) return true;
+      }
+      return false;
+    }
+    show(group, on) { this.skip = on ? null : group; this.dirty = true; }
     // recording: pause the live loop and draw chosen frames by hand, with the framing held still
     // (and eased out a little, so nothing leaves the frame as it turns) so a full turn loops cleanly
     hold(on) {
@@ -577,10 +612,12 @@
       for (let k = 0, o = 0; k < this.n; k++, o += STRIDE) {
         let x = P[o], y = P[o + 1], z = P[o + 2];
         const g = P[o + 14];
+        if (g === this.skip) continue;
         if (g >= 0 && gk < 1) { const q = g * 3; x = G[q] + (x - G[q]) * gk; y = G[q + 1] + (y - G[q + 1]) * gk; z = G[q + 2] + (z - G[q + 2]) * gk; }
         const sw = P[o + 12];
         if (sw && anim) { const ph = P[o + 13]; x += Math.sin(t * 1.1 + ph) * 0.009 * sw; z += Math.cos(t * 0.8 + ph * 1.3) * 0.007 * sw; }
-        put(x, y, z, P[o + 3], P[o + 4], P[o + 5], P[o + 6], P[o + 7], P[o + 8], P[o + 9], P[o + 10], P[o + 11], k, g);
+        const ao = g === CARD && this.glow && anim ? P[o + 11] * (1.05 + 0.2 * Math.sin(t * 2.6)) : P[o + 11];   // the card breathes, to be noticed
+        put(x, y, z, P[o + 3], P[o + 4], P[o + 5], P[o + 6], P[o + 7], P[o + 8], P[o + 9], P[o + 10], ao, k, g);
       }
       // auto-frame (before the pollen, which drifts wide): measure what was drawn and ease zoom and centring toward filling ~88% of the frame
       if (!this.o.thumb && this.n && !this.held) {
@@ -646,5 +683,5 @@
     }
   }
 
-  window.B3D = { SPECIES, WRAPS, build, single, Renderer };
+  window.B3D = { SPECIES, WRAPS, CARD, build, single, Renderer };
 })();

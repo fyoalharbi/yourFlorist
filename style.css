@@ -152,6 +152,9 @@ html[lang='ar'] .g-hint { letter-spacing: 0; font-family: 'IBM Plex Sans Arabic'
 html[dir='rtl'] .g-card:not(.is-read) .g-from { clip-path: inset(0 0 0 100%); }
 html[dir='rtl'] .g-card.is-read .g-from { animation-name: sign-rtl; }
 @keyframes sign-rtl { from { clip-path: inset(0 0 0 100%); } to { clip-path: inset(0 0 0 0); } }
+/* card: the card in the bouquet is the way in; the button is only a quiet fallback */
+.gift[data-note='card'] .g-read { animation: none; border-color: #ffffff2a; background: #0b0c0e99; font-size: 12px; padding: 10px 14px; }
+.gift[data-note='card'] #g-bar-hint { color: var(--ink-2); }
 /* the concept picker (for trying the ways out) */
 .g-mode { position: fixed; z-index: 21; top: 14px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; font: 500 10px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
 .g-mode select { font: 500 12px var(--mono); color: var(--ink); background: #0b0c0ee6; border: 1px solid #ff8a8a66; padding: 5px 6px; }
