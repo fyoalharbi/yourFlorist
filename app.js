@@ -407,6 +407,25 @@
     moving = null;
   }
 
+  // ── Surprise me: a florist's pick. One to four kinds of flower; each stem takes room by its size (a sunflower
+  //    as much as eight violets), and the bouquet is filled to a random fullness, from a single stem up to a dozen
+  //    roses' worth, so big flowers come in ones and twos and small ones by the handful. Sometimes a filler or two. ──
+  const ROOM = 12 * 0.17 ** 2;
+  function surprise() {
+    const R = (n) => (Math.random() * n) | 0, all = SPECIES.map((_, i) => i);
+    const heads = all.filter((i) => !SPECIES[i].filler), fill = all.filter((i) => SPECIES[i].filler);
+    for (let i = heads.length - 1; i > 0; i--) { const j = R(i + 1); [heads[i], heads[j]] = [heads[j], heads[i]]; }   // a fair shuffle
+    const kinds = heads.slice(0, 1 + R(4)), want = ROOM * Math.random(), ids = [];
+    let used = 0;
+    for (let k = 0; ids.length < MAX; k++) {
+      const id = k < kinds.length ? kinds[k] : kinds[R(kinds.length)], a = SPECIES[id].size ** 2;   // each kind once, then any
+      if (ids.length && used + a > want) break;   // always at least one stem
+      ids.push(id); used += a;
+    }
+    if (Math.random() < 0.6) for (let k = 1 + R(2); k > 0 && ids.length < MAX; k--) ids.push(fill[R(fill.length)]);
+    return ids;
+  }
+
   function renderPlate(pop) {
     if (!$('#species').children.length) return;
     if (!state.ids.some((i) => i === state.center && !SPECIES[i].filler)) state.center = -1;
@@ -485,14 +504,9 @@
       save();
     });
     $('#center').addEventListener('change', (e) => { state.center = +e.target.value; state.place = null; renderPlate(true); save(); });
-    // a florist's pick: two to four kinds of flower, five to nine stems, sometimes a filler or two, any paper
     $('#surprise').onclick = () => {
-      const R = (n) => (Math.random() * n) | 0, all = SPECIES.map((_, i) => i);
-      const heads = all.filter((i) => !SPECIES[i].filler).sort(() => Math.random() - 0.5), fill = all.filter((i) => SPECIES[i].filler);
-      const kinds = heads.slice(0, 2 + R(3)), ids = kinds.slice();
-      for (let n = 5 + R(5); ids.length < n; ) ids.push(kinds[R(kinds.length)]);
-      if (fill.length && Math.random() < 0.6) for (let k = 1 + R(2); k > 0; k--) ids.push(fill[R(fill.length)]);
-      state = { ...state, ids: ids.slice(0, MAX), wrap: R(WRAPS.length), seed: (Math.random() * 1e6) | 0, center: -1, place: null };
+      const ids = surprise(), R = (n) => (Math.random() * n) | 0;
+      state = { ...state, ids, wrap: R(WRAPS.length), seed: (Math.random() * 1e6) | 0, center: -1, place: null };
       document.querySelectorAll('[data-wrap]').forEach((c) => c.setAttribute('aria-pressed', +c.dataset.wrap === state.wrap));
       renderPlate(true); save();
     };
